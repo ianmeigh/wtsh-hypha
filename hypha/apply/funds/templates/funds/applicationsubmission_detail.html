@@ -8,11 +8,7 @@
 
 {% block hero %}
     <c-hero padding="pt-4">
-        {% if object.project %}
-            {% include "application_projects/includes/project_header.html" with object=object.project %}
-        {% else %}
-            {% include "funds/includes/application_header.html" %}
-        {% endif %}
+        {% include "funds/includes/application_header.html" %}
 
         <div role="tablist" class="font-medium tabs tabs-lg tabs-lift text-base-content print-hidden">
             <a
@@ -22,16 +18,8 @@
                 {% trans "Application" %}
             </a>
 
-            {% if PROJECTS_ENABLED and object.project %}
-                {% user_can_access_project object.project user as can_access_project %}
-                {% if can_access_project %}
-                    <a
-                        class="tab [--color-base-content:var(--color-neutral-content)]"
-                        href="{% url 'funds:submissions:project' pk=object.id %}"
-                    >
-                        {% trans "Project" %}
-                    </a>
-                {% endif %}
+            {% if PROJECTS_ENABLED %}
+                {% include "funds/includes/projects_tab.html" with submission=object user=user %}
             {% endif %}
 
             <a
@@ -56,12 +44,18 @@
 
 {% block content %}
     <div class="my-4 mx-auto layout layout-sidebar-end layout-flowrow-until-md layout-sidebar-flowrow-end md:[--layout-sidebar-width:20.5rem]">
-        <article class="layout-main">
+        <div class="layout-main">
             {% if request.user|has_edit_perm:object and object.status == 'draft_proposal' and not request.user.is_apply_staff %}
                 <h4>{% trans "Congratulations!" %}</h4>
-                <h5>{% blocktrans with stage=object.previous.stage %}Your {{ stage }} application has been accepted.{% endblocktrans %}</h5>
+                <h5>
+                    {% blocktrans with stage=object.previous.stage trimmed %}
+                        Your {{ stage }} application has been accepted.
+                    {% endblocktrans %}
+                </h5>
                 <a class="btn btn-primary" href="{% url 'funds:submissions:edit' object.id %}">
-                    {% trans "Start" context "start application" %}
+                    {% blocktrans with stage=object.stage trimmed %}
+                        Start your {{ stage }} application.
+                    {% endblocktrans %}
                 </a>
             {% else %}
 
@@ -87,7 +81,7 @@
                                 <relative-time datetime={{ object.submit_time|date:"c" }} class="font-semibold">
                                     {{ object.submit_time|date:"SHORT_DATETIME_FORMAT" }}
                                 </relative-time>
-                                {% trans "by" %} <strong class="max-w-md font-semibold">{% display_submission_author %}</strong>
+                                {% trans "by" %} <strong class="max-w-md font-semibold">{% get_author_display "submitted" %}</strong>
                             </div>
 
                             <div class="self-center line-clamp-2">
@@ -97,7 +91,7 @@
                                 </relative-time>
                                 {% trans "by" %}
                                 <strong class="max-w-md font-semibold">
-                                    {% display_submission_author True %}
+                                    {% get_author_display "updated" %}
                                 </strong>
                             </div>
                         </div>
@@ -114,13 +108,13 @@
                             {% endif %}
 
                             {% can "delete_submission" object as can_delete_submission %}
-                            {% if can_delete_submission %}
+                            {% if request.user == object.user and can_delete_submission %}
                                 <a
                                     class="btn btn-soft btn-error btn-sm btn-square"
                                     href="{% url 'funds:submissions:delete' object.id %}"
                                     hx-get="{% url 'funds:submissions:delete' object.id %}"
                                     hx-target="#htmx-modal"
-                                    aria-label="{% trans "Delete Submission" %}"
+                                    aria-label="{% trans 'Delete Submission' %}"
                                 >
                                     {% heroicon_micro "trash" class="size-4" aria_hidden=true %}
                                     <span class="sr-only">{% trans "Delete" %}</span>
@@ -147,7 +141,7 @@
 
                 </article>
             {% endif %}
-        </article>
+        </div>
 
         <aside class="flex flex-col gap-4 layout-sidebar">
             {% block sidebar_top %}
@@ -245,4 +239,4 @@
             {% endblock %}
         </aside>
     </div>
-{% endblock %}
+{% endblock content %}

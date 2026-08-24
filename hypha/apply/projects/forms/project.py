@@ -85,8 +85,16 @@ class ApproveContractForm(forms.Form):
 
 class ProjectCreateForm(forms.Form):
     submission = forms.ModelChoiceField(
-        queryset=ApplicationSubmission.objects.filter(project__isnull=True),
+        queryset=ApplicationSubmission.objects.all(),
         widget=forms.HiddenInput(),
+    )
+
+    title = forms.CharField(
+        label=_("Project title"),
+        help_text=_(
+            "A submission can have several projects. Give this one a name so it "
+            "can be told apart from the others."
+        ),
     )
 
     project_lead = forms.ModelChoiceField(
@@ -109,6 +117,7 @@ class ProjectCreateForm(forms.Form):
 
         if instance:
             self.fields["submission"].initial = instance.id
+            self.fields["title"].initial = instance.title
 
         # Update lead field queryset
         lead_field = self.fields["project_lead"]
@@ -144,6 +153,7 @@ class ProjectCreateForm(forms.Form):
             status=status,
             end_date=end_date,
             start_date=start_date,
+            title=self.cleaned_data["title"],
         )
 
 
@@ -490,3 +500,12 @@ class UpdateProjectDatesForm(forms.ModelForm):
             proposed_start.disabled = True
             proposed_start.required = False
             proposed_start.widget = proposed_start.hidden_widget()
+
+
+class UpdateProjectContractNumberForm(forms.ModelForm):
+    class Meta:
+        fields = ["contract_number"]
+        model = Project
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)

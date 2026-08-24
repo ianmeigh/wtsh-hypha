@@ -1,6 +1,7 @@
 import django_tables2 as tables
 from django.conf import settings
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from hypha.apply.projects.models import Project
 from hypha.core.tables import RelativeTimeColumn
@@ -12,7 +13,7 @@ from .models import Report
 class ReportingTable(tables.Table):
     title = tables.LinkColumn(
         "funds:submissions:project",
-        args=[tables.utils.A("submission_id")],
+        args=[tables.utils.A("submission_id"), tables.utils.A("pk")],
         attrs={
             "a": {
                 "class": "link link-hover font-semibold break-words transition-colors line-clamp-2 max-w-md"
@@ -20,19 +21,19 @@ class ReportingTable(tables.Table):
         },
     )
     organization_name = tables.Column(
-        accessor="submission__organization_name", verbose_name="Organization name"
+        accessor="submission__organization_name", verbose_name=_("Organization name")
     )
     current_report_status = tables.Column(
-        attrs={"td": {"class": ""}}, verbose_name="Status"
+        attrs={"td": {"class": ""}}, verbose_name=_("Status")
     )
     current_report_submitted_date = tables.Column(
-        verbose_name="Submitted date", accessor="current_report_submitted_date__date"
+        verbose_name=_("Submitted date"), accessor="current_report_submitted_date__date"
     )
     current_report_due_date = tables.Column(
-        verbose_name="Due Date", accessor="report_config__current_report__end_date"
+        verbose_name=_("Due Date"), accessor="report_config__current_report__end_date"
     )
     current_report_last_notified_date = tables.Column(
-        verbose_name="Last Notified",
+        verbose_name=_("Last Notified"),
         accessor="report_config__current_report__notified__date",
     )
 
@@ -48,6 +49,14 @@ class ReportingTable(tables.Table):
         model = Project
         orderable = True
         attrs = {"class": "table overflow-x-auto ReportingTable"}
+        row_attrs = {
+            "onclick": lambda record: (
+                f"window.location.href='{record.get_absolute_url()}'"
+            ),
+            "class": "table-row-link",
+            "role": "button",
+            "tabindex": "0",  # Accessibility
+        }
 
     def render_title(self, record):
         return get_project_title(record)
@@ -79,6 +88,14 @@ class ReportListTable(tables.Table):
         model = Report
         template_name = "application_projects/tables/table.html"
         attrs = {"class": "table projects-table ReportListTable"}
+        row_attrs = {
+            "onclick": lambda record: (
+                f"window.location.href='{record.get_absolute_url()}'"
+            ),
+            "class": "table-row-link",
+            "role": "button",
+            "tabindex": "0",  # Accessibility
+        }
 
     def render_report_period(self, record):
         return format_html(

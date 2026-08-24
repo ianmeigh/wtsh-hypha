@@ -60,13 +60,13 @@
 </form>
 
 <script type="module">
-    import Choices from "{% static 'js/esm/choices.js-10-2-0.js' %}";
+    import Choices from "{% static 'js/esm/choices.js-11-2-3.js' %}";
 
     const choices = JSON.parse('{{ json_choices|safe }}')
 
     {# Define translations for the button text #}
-    const CLEAR_TEXT = "{% trans "Clear" %}"
-    const TRANSLATE_TEXT = "{% trans "Translate" %}"
+    const CLEAR_TEXT = "{% trans 'Clear' %}"
+    const TRANSLATE_TEXT = "{% trans 'Translate' %}"
 
     function getToChoices(from_lang) {
         const selected = choices.find((choice) => choice.value === from_lang)

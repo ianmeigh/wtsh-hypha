@@ -8,7 +8,6 @@ from django.contrib.auth import get_user_model
 from django.db.models import F, Q
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django_tables2.utils import A
@@ -16,6 +15,7 @@ from wagtail.models import Page
 
 from hypha.apply.categories.blocks import CategoryQuestionBlock
 from hypha.apply.categories.models import MetaTerm, Option
+from hypha.apply.funds.models.submissions import AnonymizedSubmission
 from hypha.apply.funds.reviewers.services import get_all_reviewers
 from hypha.apply.review.models import Review
 from hypha.core.tables import RelativeTimeColumn
@@ -55,7 +55,7 @@ class SubmissionsTable(tables.Table):
         orderable=True,
         attrs={
             "td": {
-                "class": "js-title max-w-sm",
+                "class": "max-w-sm",
             },
             "a": {
                 "data-tippy-content": lambda record: render_title(record),
@@ -145,59 +145,20 @@ class LabeledCheckboxColumn(tables.CheckBoxColumn):
         return self.wrap_with_label(checkbox, value)
 
 
-class BaseAdminSubmissionsTable(SubmissionsTable):
-    lead = tables.Column(order_by=("lead__full_name",))
-    reviews_stats = tables.TemplateColumn(
-        template_name="funds/tables/column_reviews.html",
-        verbose_name=mark_safe(
-            'Reviews<div>Comp. <span class="counts-separator">/</span> Assgn.</div>'
-        ),
-        orderable=False,
-    )
-    screening_status = tables.Column(
-        verbose_name=_("Screening"), accessor="screening_statuses"
-    )
-    organization_name = tables.Column()
-
-    class Meta(SubmissionsTable.Meta):
-        fields = (
-            "title",
-            "phase",
-            "stage",
-            "fund",
-            "round",
-            "lead",
-            "submit_time",
-            "last_update",
-            "screening_status",
-            "reviews_stats",
-            "organization_name",
-        )
-        sequence = fields + ("comments",)
-
-    def render_lead(self, value):
-        return format_html("<span>{}</span>", value)
-
-    def render_screening_status(self, value):
-        try:
-            status = value.get()
-            classname = "status-yes" if status.yes else "status-no text-red-500"
-            return format_html(
-                f"<span class='font-medium text-xs {classname}'>{'👍' if status.yes else '👎'} {status.title}</span>"
-            )
-        except ScreeningStatus.DoesNotExist:
-            return format_html(
-                "<span class='text-xs text-fg-muted'>{}</span>", "Awaiting"
-            )
-
-
 def get_used_rounds(request):
-    return Round.objects.filter(submissions__isnull=False).distinct()
+    return Round.objects.filter(
+        Q(Q(submissions__isnull=False) | Q(anonymized_submissions__isnull=False))
+    ).distinct()
 
 
 def get_used_funds(request):
     # Use page to pick up on both Labs and Funds
-    return Page.objects.filter(applicationsubmission__isnull=False).distinct()
+    return Page.objects.filter(
+        Q(
+            Q(applicationsubmission__isnull=False)
+            | Q(anonymizedsubmission__isnull=False)
+        )
+    ).distinct()
 
 
 def get_round_leads(request):
@@ -205,11 +166,19 @@ def get_round_leads(request):
 
 
 def get_screening_statuses(request):
-    return ScreeningStatus.objects.filter(
+    cache_attr = "_cache_screening_statuses"
+    if request is not None and hasattr(request, cache_attr):
+        return getattr(request, cache_attr)
+    sub_filter = Q(
         id__in=ApplicationSubmission.objects.all()
         .values("screening_statuses__id")
         .distinct("screening_statuses__id")
     )
+    anonymized_filter = Q(anonymized_submissions__isnull=False)
+    qs = ScreeningStatus.objects.filter(sub_filter | anonymized_filter)
+    if request is not None:
+        setattr(request, cache_attr, qs)
+    return qs
 
 
 def get_meta_terms(request):
@@ -305,35 +274,33 @@ class SubmissionFilter(filters.FilterSet):
 
     def filter_category_options(self, queryset, name, value):
         """
-        Filter submissions based on the category options selected.
+        Filter submissions whose answer to any category-question field includes
+        one of the selected options.
 
-        In order to do that we need to first get all the category fields used in the submission.
-
-        And then use those category fields to filter submissions with their form_data.
+        Only the form schemas (form_fields) are pulled into Python — to discover
+        which field IDs are CategoryQuestionBlocks. The form_data lookup itself
+        runs in the database via JSONB containment.
         """
+        if not value:
+            return queryset
+
         query = Q()
-        submission_data = queryset.values("form_fields", "form_data").distinct()
-        for submission in submission_data:
-            for field in submission["form_fields"]:
+        seen_field_ids = set()
+        for form_fields in queryset.values_list("form_fields", flat=True).distinct():
+            for field in form_fields:
+                if field.id in seen_field_ids:
+                    continue
                 if isinstance(field.block, CategoryQuestionBlock):
-                    try:
-                        category_options = category_ids = submission["form_data"][
-                            field.id
-                        ]
-                    except KeyError:
-                        include_in_filter = False
-                    else:
-                        if isinstance(category_options, str):
-                            category_options = [category_options]
-                        include_in_filter = set(category_options) & set(value)
-                    # Check if filter options has any value in category options
-                    # If yes then those submissions should be filtered in the list
-                    if include_in_filter:
-                        kwargs = {
-                            "{0}__{1}".format("form_data", field.id): category_ids
-                        }
-                        query |= Q(**kwargs)
-        return queryset.filter(query)
+                    seen_field_ids.add(field.id)
+                    for option_id in value:
+                        # Single-select stores the option id as a scalar string.
+                        query |= Q(form_data__contains={field.id: option_id})
+                        # Multi-select stores option ids as a JSON array.
+                        query |= Q(form_data__contains={field.id: [option_id]})
+
+        if not seen_field_ids:
+            return queryset.none()
+        return queryset.filter(query).distinct()
 
 
 class SubmissionFilterAndSearch(SubmissionFilter):
@@ -353,6 +320,52 @@ class SubmissionFilterAndSearch(SubmissionFilter):
             # if value is 0 or None
             queryset = queryset.exclude(is_archive=True)
         return queryset
+
+
+class AnonymizedSubmissionFilter(filters.FilterSet):
+    fund = ModelMultipleChoiceFilter(
+        field_name="page", queryset=get_used_funds, label=_("Funds")
+    )
+    round = ModelMultipleChoiceFilter(queryset=get_used_rounds, label=_("Rounds"))
+    screening_statuses = ModelMultipleChoiceFilter(
+        queryset=get_screening_statuses, label=_("Screening"), null_label=_("No Status")
+    )
+
+    category_options = MultipleChoiceFilter(
+        choices=[], label=_("Category"), method="filter_category_options"
+    )
+
+    class Meta:
+        model = AnonymizedSubmission
+        fields = ("fund", "round")
+
+    def __init__(self, *args, exclude=None, limit_statuses=None, **kwargs):
+        if exclude is None:
+            exclude = []
+
+        super().__init__(*args, **kwargs)
+
+        self.filters["status"] = StatusMultipleChoiceFilter(limit_to=limit_statuses)
+        self.filters = {
+            field: filter
+            for field, filter in self.filters.items()
+            if field not in exclude
+        }
+
+    def filter_category_options(self, queryset, name, value):
+        """
+        Filter submissions based on the category options selected.
+
+        In order to do that we need to first get all the category fields used in the submission.
+
+        And then use those category fields to filter submissions with their form_data.
+        """
+        query = Q()
+        if value:
+            if isinstance(value, str):
+                value = [value]
+            query |= Q(selected_category_options__in=value)
+        return queryset.filter(query)
 
 
 class SubmissionDashboardFilter(filters.FilterSet):
@@ -400,6 +413,15 @@ class RoundsTable(tables.Table):
     class Meta:
         fields = ("title", "fund", "lead", "start_date", "end_date", "deterrmined")
         attrs = {"class": "table"}
+        row_attrs = {
+            "onclick": lambda record: (
+                f"window.location.href='{record.get_absolute_url()}'"
+            ),
+            "class": "table-row-link",
+            "role": "button",
+            "tabindex": "0",  # Accessibility
+        }
+        template_name = "funds/tables/table.html"
 
     def render_lead(self, value):
         return format_html("<span>{}</span>", value)
@@ -435,7 +457,7 @@ class ActiveRoundFilter(MultipleChoiceFilter):
         super().__init__(
             self,
             *args,
-            choices=[("active", "Active"), ("inactive", "Inactive")],
+            choices=[("active", _("Active")), ("inactive", _("Inactive"))],
             **kwargs,
         )
 
@@ -455,7 +477,12 @@ class OpenRoundFilter(MultipleChoiceFilter):
         super().__init__(
             self,
             *args,
-            choices=[("open", "Open"), ("closed", "Closed"), ("new", "Not Started")],
+            choices=[
+                ("open", _("Open")),
+                ("closed", _("Closed")),
+                ("new", _("Not Started")),
+                ("unpublished", _("Unpublished")),
+            ],
             **kwargs,
         )
 
@@ -468,6 +495,8 @@ class OpenRoundFilter(MultipleChoiceFilter):
             return qs.closed()
         if value == "new":
             return qs.new()
+        if value == "unpublished":
+            return qs.not_live()
 
         return qs.open()
 
@@ -476,7 +505,7 @@ class RoundsFilter(filters.FilterSet):
     fund = ModelMultipleChoiceFilter(queryset=get_used_funds, label=_("Funds"))
     lead = ModelMultipleChoiceFilter(queryset=get_round_leads, label=_("Leads"))
     active = ActiveRoundFilter(label=_("Active"))
-    round_state = OpenRoundFilter(label=_("Open"))
+    round_state = OpenRoundFilter(label=_("State"))
 
 
 class ReviewerLeaderboardFilterForm(forms.ModelForm):
@@ -553,6 +582,14 @@ class ReviewerLeaderboardTable(tables.Table):
         order_by = ("-ninety_days",)
         attrs = {"class": "table"}
         empty_text = _("No reviews available")
+        row_attrs = {
+            "onclick": lambda record: (
+                f"window.location.href='{record.get_absolute_url()}'"
+            ),
+            "class": "table-row-link",
+            "role": "button",
+            "tabindex": "0",  # Accessibility
+        }
 
 
 class ReviewerLeaderboardDetailTable(tables.Table):
@@ -563,9 +600,6 @@ class ReviewerLeaderboardDetailTable(tables.Table):
         orderable=True,
         verbose_name=_("Submission"),
         attrs={
-            "td": {
-                "class": "js-title",
-            },
             "a": {
                 "data-tippy-content": lambda record: render_title(record),
                 "data-tippy-placement": "top",
@@ -604,3 +638,11 @@ class StaffAssignmentsTable(tables.Table):
         ]
         attrs = {"class": "table"}
         empty_text = _("No staff available")
+        row_attrs = {
+            "onclick": lambda record: (
+                f"window.location.href='{record.get_absolute_url()}'"
+            ),
+            "class": "table-row-link",
+            "role": "button",
+            "tabindex": "0",  # Accessibility
+        }

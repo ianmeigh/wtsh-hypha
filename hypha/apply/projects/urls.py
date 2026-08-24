@@ -1,9 +1,12 @@
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from hypha.apply.projects.views.project import ProjectSOWEditView
+from hypha.apply.projects.views.project import (
+    ProjectSOWEditView,
+    project_detail_redirect,
+)
 
-from .reports.views import ReportFrequencyUpdate
+from .reports.views import ReportDateAddView, ReportFrequencyUpdate
 from .views import (
     ApproveContractView,
     BatchUpdateInvoiceStatusView,
@@ -31,20 +34,25 @@ from .views import (
     SendForApprovalView,
     SkipPAFApprovalProcessView,
     SubmitContractDocumentsView,
+    TagInvoiceView,
     UpdateAssignApproversView,
     UpdateLeadView,
     UpdatePAFApproversView,
     UploadContractDocumentView,
     UploadContractView,
     UploadDocumentView,
+    invoice_export_download,
+    invoice_export_status,
     partial_contracting_documents,
     partial_get_invoice_detail_actions,
     partial_get_invoice_status,
     partial_get_invoice_status_table,
+    partial_get_invoice_tags,
     partial_project_information,
     partial_project_lead,
     partial_project_title,
     partial_supporting_documents,
+    update_project_contract_number,
     update_project_dates,
     update_project_title,
 )
@@ -57,6 +65,16 @@ urlpatterns = [
     path("reports/", include("hypha.apply.projects.reports.urls"), name="reports"),
     path("invoices/", InvoiceListView.as_view(), name="invoices"),
     path(
+        "invoices/export-status/",
+        invoice_export_status,
+        name="invoice-export-status",
+    ),
+    path(
+        "invoices/export-download/",
+        invoice_export_download,
+        name="invoice-export-download",
+    ),
+    path(
         "all/bulk_invoice_status_update/",
         BatchUpdateInvoiceStatusView.as_view(),
         name="bulk_invoice_status_update",
@@ -67,7 +85,7 @@ urlpatterns = [
             [
                 path(
                     "",
-                    RedirectView.as_view(pattern_name="funds:submissions:project"),
+                    project_detail_redirect,
                     name="detail",
                 ),
                 path("partial/lead/", partial_project_lead, name="project_lead"),
@@ -92,6 +110,11 @@ urlpatterns = [
                     "dates/update/",
                     update_project_dates,
                     name="project_dates_update",
+                ),
+                path(
+                    "contract-number/update/",
+                    update_project_contract_number,
+                    name="project_contract_number_update",
                 ),
                 path(
                     "edit/project-form", ProjectFormEditView.as_view(), name="edit_pf"
@@ -207,6 +230,11 @@ urlpatterns = [
                     ReportFrequencyUpdate.as_view(),
                     name="report_frequency_update",
                 ),
+                path(
+                    "reports/add/",
+                    ReportDateAddView.as_view(),
+                    name="report_add",
+                ),
                 path("invoice/", CreateInvoiceView.as_view(), name="invoice"),
                 path(
                     "partial/invoice-status/",
@@ -246,6 +274,16 @@ urlpatterns = [
                                 "actions/",
                                 partial_get_invoice_detail_actions,
                                 name="partial-invoice-detail-actions",
+                            ),
+                            path(
+                                "tags/",
+                                TagInvoiceView.as_view(),
+                                name="invoice-tags",
+                            ),
+                            path(
+                                "partial/tags/",
+                                partial_get_invoice_tags,
+                                name="partial-invoice-tags",
                             ),
                             path(
                                 "documents/invoice/",

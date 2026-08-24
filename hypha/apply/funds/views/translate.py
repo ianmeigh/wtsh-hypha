@@ -43,7 +43,7 @@ class TranslateSubmissionView(View):
             if not request.user.is_org_faculty:
                 messages.warning(
                     self.request,
-                    "User attempted to translate submission but is not org faculty",
+                    _("User attempted to translate submission but is not org faculty"),
                 )
                 return HttpResponseRedirect(self.submission.get_absolute_url())
             return super(TranslateSubmissionView, self).dispatch(
@@ -158,8 +158,8 @@ def partial_translate_answers(request: HttpRequest, pk: int) -> HttpResponse:
             ctx.update(
                 {
                     "object": submission,
-                    "from_lang_name": from_lang_name,
-                    "to_lang_name": to_lang_name,
+                    "from_lang_name": from_lang_name,  # type: ignore[dict-item]
+                    "to_lang_name": to_lang_name,  # type: ignore[dict-item]
                 }
             )
         except ValueError:
@@ -187,7 +187,7 @@ def partial_translate_answers(request: HttpRequest, pk: int) -> HttpResponse:
         )
 
     if message:
-        trigger_dict.update({"showMessage": message})
+        trigger_dict.update({"showMessage": message})  # type: ignore[dict-item]
 
     if trigger_dict:
         response["HX-Trigger"] = json.dumps(trigger_dict)

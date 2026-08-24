@@ -3,7 +3,7 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -31,6 +31,10 @@ from hypha.apply.funds.services import annotate_review_recommendation_and_count
 from hypha.apply.review.options import REVIEWER
 from hypha.apply.todo.options import DOWNLOAD_SUBMISSIONS_EXPORT
 from hypha.apply.todo.views import remove_tasks_of_related_obj_for_specific_code
+from hypha.apply.users.decorators import (
+    is_apply_staff,
+    is_apply_staff_or_reviewer_required,
+)
 from hypha.apply.users.roles import REVIEWER_GROUP_NAME
 
 from .. import services
@@ -49,12 +53,16 @@ User = get_user_model()
 @login_required
 def partial_submission_lead(request, pk):
     submission = get_object_or_404(ApplicationSubmission, pk=pk)
+    has_permission(
+        "submission_view", request.user, object=submission, raise_exception=True
+    )
     return render(
         request, "submissions/partials/submission-lead.html", {"submission": submission}
     )
 
 
 @login_required
+@user_passes_test(is_apply_staff_or_reviewer_required)
 @require_http_methods(["GET"])
 def sub_menu_funds(request):
     selected_funds = request.GET.getlist("fund")
@@ -76,6 +84,7 @@ def sub_menu_funds(request):
 
 
 @login_required
+@user_passes_test(is_apply_staff_or_reviewer_required)
 @require_http_methods(["GET"])
 def sub_menu_leads(
     request, template_name="submissions/submenu/leads.html"
@@ -110,6 +119,7 @@ def sub_menu_leads(
 
 
 @login_required
+@user_passes_test(is_apply_staff_or_reviewer_required)
 @require_http_methods(["GET"])
 def sub_menu_rounds(request):
     selected_rounds = request.GET.getlist("round")
@@ -143,6 +153,7 @@ def sub_menu_rounds(request):
 
 
 @login_required
+@user_passes_test(is_apply_staff)
 @require_http_methods(["GET"])
 def sub_menu_reviewers(request):
     selected_reviewers = request.GET.getlist("reviewers")
@@ -174,6 +185,7 @@ def sub_menu_reviewers(request):
 
 
 @login_required
+@user_passes_test(is_apply_staff_or_reviewer_required)
 @require_http_methods(["GET"])
 def sub_menu_meta_terms(request):
     selected_meta_terms = request.GET.getlist("meta_terms")
@@ -205,6 +217,7 @@ def sub_menu_meta_terms(request):
 
 
 @login_required
+@user_passes_test(is_apply_staff_or_reviewer_required)
 @require_http_methods(["GET"])
 def sub_menu_category_options(request):
     selected_category_options = request.GET.getlist("category_options")
@@ -244,6 +257,9 @@ def partial_reviews_card(request: HttpRequest, pk: str) -> HttpResponse:
         HttpResponse
     """
     submission = get_object_or_404(ApplicationSubmission, pk=pk)
+    has_permission(
+        "submission_view", request.user, object=submission, raise_exception=True
+    )
 
     assigned_reviewers = submission.assigned.review_order()
 
@@ -271,6 +287,7 @@ def partial_reviews_card(request: HttpRequest, pk: str) -> HttpResponse:
 
 
 @login_required
+@user_passes_test(is_apply_staff_or_reviewer_required)
 @require_http_methods(["GET"])
 def partial_reviews_decisions(request: HttpRequest) -> HttpResponse:
     submission_ids = request.GET.get("ids")
@@ -292,12 +309,16 @@ def partial_reviews_decisions(request: HttpRequest) -> HttpResponse:
 @login_required
 def partial_meta_terms_card(request, pk):
     submission = get_object_or_404(ApplicationSubmission, pk=pk)
+    has_permission(
+        "submission_view", request.user, object=submission, raise_exception=True
+    )
     meta_terms = submission.meta_terms.all()
     ctx = {"meta_terms": meta_terms, "submission": submission}
     return render(request, "submissions/partials/meta-terms-card.html", ctx)
 
 
 @login_required
+@user_passes_test(is_apply_staff)
 @require_http_methods(["GET", "POST"])
 def sub_menu_update_status(request: HttpRequest) -> HttpResponse:
     submission_ids = request.GET.getlist("selectedSubmissionIds")
@@ -330,6 +351,7 @@ def sub_menu_update_status(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
+@user_passes_test(is_apply_staff)
 @require_http_methods(["GET", "POST"])
 def sub_menu_bulk_update_lead(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
@@ -337,7 +359,7 @@ def sub_menu_bulk_update_lead(request: HttpRequest) -> HttpResponse:
         lead = request.POST.get("lead")
 
         submissions = ApplicationSubmission.objects.filter(id__in=submission_ids)
-        lead = User.objects.get(id=lead)
+        lead = get_object_or_404(User.objects.staff(), id=lead)
 
         services.bulk_update_lead(
             submissions=submissions, user=request.user, request=request, lead=lead
@@ -368,6 +390,7 @@ def sub_menu_bulk_update_lead(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
+@user_passes_test(is_apply_staff)
 @require_http_methods(["GET", "POST"])
 def sub_menu_bulk_update_reviewers(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
@@ -495,7 +518,7 @@ def submission_export_status(request: HttpRequest) -> HttpResponse:
             # If there's an existing/active export, show it's status
             status = export_manager.status
             if status == STATUS_GENERATING:
-                ctx["poll_time"] = get_export_polling_time(export_manager.total_export)
+                ctx["poll_time"] = get_export_polling_time(export_manager.total_export)  # type: ignore[arg-type]
     else:
         ctx["not_async"] = True
 
@@ -506,9 +529,10 @@ def submission_export_status(request: HttpRequest) -> HttpResponse:
         all_url = urlparse(request.headers.get("Hx-Current-Url"))
         url_list = list(all_url)
         url_list[4] = urlencode(
-            {**parse_qs(all_url.query), "format": "csv"}, doseq=True
+            {**parse_qs(all_url.query), "format": "csv"},  # type: ignore[arg-type]
+            doseq=True,
         )
-        ctx["start_export_url"] = urlunparse(url_list)
+        ctx["start_export_url"] = urlunparse(url_list)  # type: ignore[arg-type]
 
     ctx["generating"] = status == STATUS_GENERATING
     ctx["failed"] = status == STATUS_ERROR

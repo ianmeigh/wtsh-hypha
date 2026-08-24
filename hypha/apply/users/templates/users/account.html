@@ -1,5 +1,5 @@
 {% extends 'base-apply.html' %}
-{% load i18n users_tags wagtailcore_tags heroicons %}
+{% load i18n users_tags wagtailcore_tags heroicons static hooks_tags %}
 
 {% block title %}{% trans "Account" %}{% endblock %}
 
@@ -54,6 +54,9 @@
                     {% trans "Save" %}
                 </button>
             </form>
+
+            {# Extension point for plugins to inject content into the profile column. #}
+            {% hook "user_account_profile" %}
         </div>
 
         <div class="flex-1 md:ps-8">
@@ -86,18 +89,33 @@
             </h3>
             <p class="card-actions">
                 {% if default_device %}
-                    <a class="btn btn-primary" href="{% url 'users:backup_tokens' %}">{% trans "Backup codes" %}</a>
-                    <a class="btn btn-warning" href="{% url 'two_factor:disable' %}">{% trans "Disable 2FA" %}</a>
+                    <a class="btn btn-secondary btn-outline" href="{% url 'users:backup_tokens' %}">{% trans "Backup codes" %}</a>
+                    <a class="btn btn-warning btn-outline" href="{% url 'two_factor:disable' %}">{% trans "Disable 2FA" %}</a>
                 {% else %}
-                    <a class="btn btn-primary" href="{% url 'two_factor:setup' %}">{% trans "Enable 2FA" %}</a>
+                    <a class="btn btn-secondary btn-outline" href="{% url 'two_factor:setup' %}">{% trans "Enable 2FA" %}</a>
                 {% endif %}
             </p>
+
+            {% if PASSKEYS_ENABLED %}
+                <h3 class="mt-6 mb-2 text-sm font-semibold">{% trans "Passkeys" %}</h3>
+                <p class="mb-2 text-sm text-fg-muted">
+                    {% trans "With passkeys you can use your fingerprint, face, or screen lock to login securely without a password." %}
+                </p>
+
+                <div
+                    hx-get="{% url 'users:passkey_list' %}"
+                    hx-trigger="load"
+                    hx-swap="innerHTML"
+                >
+                    <div class="w-full h-8 rounded animate-pulse bg-base-300"></div>
+                </div>
+            {% endif %}
 
             {# Remove the comment block tags below when such need arises. e.g. adding new providers #}
             {% comment %}
             {% can_use_oauth as show_oauth_link %}
             {% if show_oauth_link %}
-            <h3 class="mb-2 text-base">Manage OAuth</h3>
+            <h3 class="mb-2 text-base">{% trans "Manage OAuth" %}</h3>
             <div>
                 <a href="{% url 'users:oauth' %}">
                     {% trans "Manage OAuth" %}
@@ -107,4 +125,10 @@
             {% endcomment %}
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    {% if PASSKEYS_ENABLED %}
+        <script src="{% static 'js/passkeys.js' %}"></script>
+    {% endif %}
 {% endblock %}

@@ -10,8 +10,8 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import models
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
-from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
@@ -23,7 +23,6 @@ from hypha.apply.determinations.utils import (
     has_final_determination,
     outcome_from_actions,
 )
-from hypha.apply.funds.models.screening import ScreeningStatus
 from hypha.apply.funds.tasks import generate_submission_csv
 from hypha.apply.funds.views.partials import submission_export_download
 from hypha.apply.funds.workflows import (
@@ -49,13 +48,14 @@ from ..models import (
 )
 from ..tables import (
     SubmissionFilter,
+    get_screening_statuses,
 )
 from ..utils import check_submissions_same_determination_form, get_export_polling_time
 
 User = get_user_model()
 
 
-def screening_decision_context(selected_screening_statuses: list) -> dict:
+def screening_decision_context(request, selected_screening_statuses: list) -> dict:
     screening_options = [
         {
             "slug": "null",
@@ -68,11 +68,7 @@ def screening_decision_context(selected_screening_statuses: list) -> dict:
             "title": item.title,
             "selected": str(item.id) in selected_screening_statuses,
         }
-        for item in ScreeningStatus.objects.filter(
-            id__in=ApplicationSubmission.objects.all()
-            .values("screening_statuses__id")
-            .distinct("screening_statuses__id")
-        )
+        for item in get_screening_statuses(request)
     ]
 
     selected_screening_statuses_objects = filter(
@@ -116,10 +112,10 @@ def submissions_all(
     can_view_archives = permissions.can_view_archived_submissions(request.user)
     can_access_drafts = permissions.can_access_drafts(request.user)
 
-    selected_fund_objects = (
+    selected_fund_objects: list = (
         Page.objects.filter(id__in=selected_funds) if selected_funds else []
     )
-    selected_round_objects = (
+    selected_round_objects: list = (
         Round.objects.filter(id__in=selected_rounds) if selected_rounds else []
     )
 
@@ -131,17 +127,15 @@ def submissions_all(
     start = time.time()
 
     if can_view_archives and show_archived:
-        qs = ApplicationSubmission.objects.include_archive().for_table(request.user)
+        qs = ApplicationSubmission.objects.include_archive()
     else:
-        qs = ApplicationSubmission.objects.current().for_table(request.user)
+        qs = ApplicationSubmission.objects.current()
 
-    # Reviewers also have access to this view but should only see a subset of submissions.
+    # By default, reviewers can see all submissions. This can be configured in Wagtail Admin > Apply > Reviewer Settings
     if request.user.is_reviewer:
         reviewer_settings = ReviewerSettings.for_request(request)
         if reviewer_settings.use_settings:
             qs = qs.for_reviewer_settings(request.user, reviewer_settings)
-        else:
-            qs = qs.filter(reviewers=request.user)
 
     if not can_access_drafts or not show_drafts:
         qs = qs.exclude_draft()
@@ -199,7 +193,7 @@ def submissions_all(
     if selected_applicants:
         qs = qs.filter(user__in=selected_applicants)
 
-    status_count_raw = {}
+    status_count_raw: dict = {}
     # year_counts_raw = {}
     # month_counts_raw = {}
 
@@ -246,8 +240,7 @@ def submissions_all(
         ]
     )
 
-    qs = filters.qs
-    qs = qs.prefetch_related("meta_terms")
+    qs = filters.qs.for_table(request.user).prefetch_related("meta_terms")
 
     sort_options_raw = {
         "submitted-desc": ("-submit_time", _("Newest")),
@@ -363,10 +356,25 @@ def submissions_all(
         "can_access_drafts": can_access_drafts,
         "can_bulk_archive": permissions.can_bulk_archive_submissions(request.user),
         "can_bulk_delete": permissions.can_bulk_delete_submissions(request.user),
+        "can_bulk_anonymize": permissions.can_bulk_delete_submissions(request.user),
         "can_export_submissions": permissions.can_export_submissions(request.user),
         "enable_selection": permissions.can_bulk_update_submissions(request.user),
-    } | screening_decision_context(selected_screening_statuses)
+    } | screening_decision_context(request, selected_screening_statuses)
     return render(request, template_name, ctx)
+
+
+@login_required
+@require_http_methods(["GET"])
+def bulk_archive_submissions_confirm(request):
+    if not permissions.can_bulk_archive_submissions(request.user):
+        return HttpResponseForbidden()
+
+    submission_ids = request.GET.getlist("selectedSubmissionIds")
+    return render(
+        request,
+        "submissions/bulk_archive_confirm.html",
+        {"submission_ids": submission_ids},
+    )
 
 
 @login_required
@@ -384,7 +392,23 @@ def bulk_archive_submissions(request):
         request=request,
     )
 
-    return HttpResponseClientRefresh()
+    if request.htmx:
+        return HttpResponseClientRefresh()
+    return redirect(reverse("apply:submissions:list"))
+
+
+@login_required
+@require_http_methods(["GET"])
+def bulk_delete_submissions_confirm(request):
+    if not permissions.can_bulk_delete_submissions(request.user):
+        return HttpResponseForbidden()
+
+    submission_ids = request.GET.getlist("selectedSubmissionIds")
+    return render(
+        request,
+        "submissions/bulk_delete_confirm.html",
+        {"submission_ids": submission_ids},
+    )
 
 
 @login_required
@@ -402,7 +426,47 @@ def bulk_delete_submissions(request):
         request=request,
     )
 
-    return HttpResponseClientRefresh()
+    if request.htmx:
+        return HttpResponseClientRefresh()
+    return redirect(reverse("apply:submissions:list"))
+
+
+@login_required
+@require_http_methods(["GET"])
+def bulk_anonymize_submissions_confirm(request):
+    if not settings.SUBMISSION_ANONYMIZATION_ENABLED:
+        return HttpResponseForbidden()
+    if not permissions.can_bulk_delete_submissions(request.user):
+        return HttpResponseForbidden()
+
+    submission_ids = request.GET.getlist("selectedSubmissionIds")
+    return render(
+        request,
+        "submissions/bulk_anonymize_confirm.html",
+        {"submission_ids": submission_ids},
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def bulk_anonymize_submissions(request):
+    if not settings.SUBMISSION_ANONYMIZATION_ENABLED:
+        return HttpResponseForbidden()
+    if not permissions.can_bulk_delete_submissions(request.user):
+        return HttpResponseForbidden()
+
+    submission_ids = request.POST.getlist("selectedSubmissionIds")
+    submissions = ApplicationSubmission.objects.filter(id__in=submission_ids)
+
+    services.bulk_anonymize_submissions(
+        submissions=submissions,
+        user=request.user,
+        request=request,
+    )
+
+    if request.htmx:
+        return HttpResponseClientRefresh()
+    return redirect(reverse("apply:submissions:list"))
 
 
 @login_required
@@ -446,7 +510,7 @@ def bulk_update_submissions_status(request: HttpRequest) -> HttpResponse:
             return HttpResponseClientRefresh()
         action = outcome_from_actions(transitions)
         return HttpResponseClientRedirect(
-            reverse_lazy("apply:submissions:determinations:batch")
+            reverse("apply:submissions:determinations:batch")
             + "?action="
             + action
             + "&submissions="

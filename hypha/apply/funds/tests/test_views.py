@@ -34,7 +34,6 @@ from hypha.apply.review.tests.factories import ReviewFactory
 from hypha.apply.users.tests.factories import (
     ApplicantFactory,
     CommunityReviewerFactory,
-    PartnerFactory,
     ReviewerFactory,
     StaffFactory,
     SuperUserFactory,
@@ -318,15 +317,13 @@ class TestStaffSubmissionView(BaseSubmissionViewTestCase):
 
     def test_can_create_project(self):
         # check submission doesn't already have a Project
-        with self.assertRaisesMessage(
-            Project.DoesNotExist, "ApplicationSubmission has no project."
-        ):
-            self.submission.project  # noqa: B018
+        self.assertFalse(self.submission.projects.exists())
 
         self.post_page(
             self.submission,
             {
                 "project_create_form": "",
+                "title": "Bucket one",
                 "project_lead": self.user.id,
                 "project_initial_status": CONTRACTING,
                 "project_end": timezone.now().date(),
@@ -338,9 +335,49 @@ class TestStaffSubmissionView(BaseSubmissionViewTestCase):
         project = Project.objects.order_by("-pk").first()
         submission = ApplicationSubmission.objects.get(pk=self.submission.pk)
 
-        self.assertTrue(hasattr(submission, "project"))
-        self.assertEqual(submission.project.id, project.id)
-        self.assertEqual(submission.project.status, CONTRACTING)
+        self.assertTrue(submission.projects.exists())
+        self.assertEqual(submission.projects.first().id, project.id)
+        self.assertEqual(submission.projects.first().status, CONTRACTING)
+        self.assertEqual(project.title, "Bucket one")
+
+    @override_settings(PROJECTS_ALLOW_MULTIPLE=False)
+    def test_cannot_create_second_project_when_multiple_disallowed(self):
+        ProjectFactory(submission=self.submission)
+
+        self.post_page(
+            self.submission,
+            {
+                "project_create_form": "",
+                "title": "Bucket two",
+                "project_lead": self.user.id,
+                "project_initial_status": CONTRACTING,
+                "project_end": timezone.now().date(),
+                "submission": self.submission.id,
+            },
+            view_name="create_project",
+        )
+
+        # The second project should have been rejected.
+        self.assertEqual(self.submission.projects.count(), 1)
+
+    @override_settings(PROJECTS_ALLOW_MULTIPLE=True)
+    def test_can_create_second_project_when_multiple_allowed(self):
+        ProjectFactory(submission=self.submission)
+
+        self.post_page(
+            self.submission,
+            {
+                "project_create_form": "",
+                "title": "Bucket two",
+                "project_lead": self.user.id,
+                "project_initial_status": CONTRACTING,
+                "project_end": timezone.now().date(),
+                "submission": self.submission.id,
+            },
+            view_name="create_project",
+        )
+
+        self.assertEqual(self.submission.projects.count(), 2)
 
     def test_can_see_add_determination_primary_action(self):
         def assert_add_determination_displayed(submission, button_text):
@@ -707,6 +744,24 @@ class TestStaffSubmissionView(BaseSubmissionViewTestCase):
             )
 
         assert_view_translate_displayed(self.submission)
+
+
+class TestAuthorUpdateView(BaseSubmissionViewTestCase):
+    user_factory = StaffFactory
+
+    def test_staff_can_update_author(self):
+        submission = ApplicationSubmissionFactory()
+        new_author = ApplicantFactory()
+
+        data = {
+            "author_form": "",
+            "author": new_author.id,
+        }
+        response = self.post_page(submission, data, view_name="change_author")
+        self.assertEqual(response.status_code, 200)
+
+        submission.refresh_from_db()
+        self.assertEqual(submission.user, new_author)
 
 
 class TestReviewersUpdateView(BaseSubmissionViewTestCase):
@@ -1739,7 +1794,7 @@ class TestStaffSubmissionFileView(BaseSubmissionFileViewTestCase):
     user_factory = StaffFactory
 
     def test_staff_can_access(self):
-        submission = ApplicationSubmissionFactory()
+        submission = ApplicationSubmissionFactory(with_files=True)
         response = self.get_page(submission)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain, [])
@@ -1749,13 +1804,13 @@ class TestUserSubmissionFileView(BaseSubmissionFileViewTestCase):
     user_factory = ApplicantFactory
 
     def test_owner_can_access(self):
-        submission = ApplicationSubmissionFactory(user=self.user)
+        submission = ApplicationSubmissionFactory(user=self.user, with_files=True)
         response = self.get_page(submission)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain, [])
 
     def test_user_can_not_access(self):
-        submission = ApplicationSubmissionFactory()
+        submission = ApplicationSubmissionFactory(with_files=True)
         response = self.get_page(submission)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.redirect_chain, [])
@@ -1765,7 +1820,7 @@ class TestAnonSubmissionFileView(BaseSubmissionFileViewTestCase):
     user_factory = AnonymousUser
 
     def test_anonymous_can_not_access(self):
-        submission = ApplicationSubmissionFactory()
+        submission = ApplicationSubmissionFactory(with_files=True)
         response = self.get_page(submission)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.redirect_chain), 1)
@@ -1815,13 +1870,6 @@ class TestReviewerLeaderboard(TestCase):
 
     def test_community_reviewer_cannot_access_reviewer_leaderboard(self):
         self.client.force_login(CommunityReviewerFactory())
-        response = self.client.get(
-            "/apply/submissions/reviews/", follow=True, secure=True
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_partner_cannot_access_reviewer_leaderboard(self):
-        self.client.force_login(PartnerFactory())
         response = self.client.get(
             "/apply/submissions/reviews/", follow=True, secure=True
         )

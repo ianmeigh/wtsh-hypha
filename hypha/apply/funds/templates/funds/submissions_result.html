@@ -13,105 +13,14 @@
 
 {% block content %}
     <div class="flex flex-col gap-8 my-8 mx-auto">
-        <section>
-            <div class="flex flex-wrap gap-4 justify-around lg:gap-8">
-                <section aria-labelledby="amounts-heading">
-                    <h3 id="amounts-heading" class="section-header">{% trans "Amounts" %}</h3>
-                    <div class="shadow lg:w-full stats">
-                        <dl role="list" aria-label="{% trans 'Applied amounts' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "Applied" %} ({% get_currency_symbol %})
-                            </dt>
-                            <dd class="stat-value">
-                                {{ submission_sum|default:"0"|format_number_as_currency }}
-                            </dd>
-                        </dl>
-                        <dl role="list" aria-label="{% trans 'Accepted amounts' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "Accepted" %} ({% get_currency_symbol %})
-                            </dt>
-                            <dd class="stat-value">
-                                {{ submission_accepted_sum|default:"0"|format_number_as_currency }}
-                            </dd>
-
-                        </dl>
-                    </div>
-                </section>
-
-                <section aria-labelledby="submissions-heading">
-                    <h3 id="submissions-heading" class="section-header">{% trans "Submissions" %}</h3>
-                    <div class="w-full shadow stats">
-                        <dl role="list" aria-label="{% trans 'Applied submissions' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "Applied" %}
-                            </dt>
-                            <dd class="stat-value">
-                                {{ object_list.count }}
-                            </dd>
-
-                        </dl>
-                        <dl role="list" aria-label="{% trans 'Accepted submissions' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "Accepted" %}
-                            </dt>
-                            <dd class="stat-value">
-                                {{ submission_accepted_count|default:"0" }}
-                            </dd>
-                        </dl>
-                        <dl role="list" aria-label="{% trans 'Pending submissions' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "Pending" %}
-                            </dt>
-                            <dd class="stat-value">
-                                {{ submission_undetermined_count|default:"0" }}
-                            </dd>
-                        </dl>
-                    </div>
-                </section>
-
-                <section aria-labelledby="reviews-heading">
-                    <h3 id="reviews-heading" class="section-header">{% trans "Reviews" %}</h3>
-                    <div class="w-full shadow stats">
-                        <dl role="list" aria-label="{% trans 'All reviews' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "All" %}
-                            </dt>
-                            <dd class="stat-value">
-                                {{ review_count|default:"0" }}
-                            </dd>
-                        </dl>
-                        <dl role="list" aria-label="{% trans 'Your reviews' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "You" %}
-                            </dt>
-                            <dd class="stat-value">
-                                {{ review_my_count|default:"0" }}
-                            </dd>
-                        </dl>
-                        <dl role="list" aria-label="{% trans 'Your average score' %}" class="stat">
-                            <dt class="stat-title">
-                                {% trans "Your avg. score" %}
-                            </dt>
-                            <dd class="stat-value">
-                                {{ review_my_score|floatformat:"0"|default:"0" }}
-                            </dd>
-                        </dl>
-                    </div>
-                </section>
-            </div>
-        </section>
-
         <section aria-labelledby="submission-value-total">
-            <h2 id="submission-value-total" class="section-header">{% trans "Totals" %}</h2>
-
-
             {% include "funds/includes/table_filter_and_search.html" with search_term=search_term %}
 
             <div class="w-full rounded-t-none border-b rounded-b-box border-x stats border-base-300">
                 <section class='stat' aria-labelledby="submissions-count-heading">
                     <span id="submissions-count-heading" class="stat-title">{% trans "Number of submissions" %}</span>
                     <span class="stat-value">
-                        {{ count_values }}<sup>{% if not count_values == object_list.count %}*{% endif %}</sup>
+                        {{ count_values }}<sup>{% if not count_values == submission_count %}*{% endif %}</sup>
                     </span>
                 </section>
                 <section class='stat' aria-labelledby="average-value-heading">
@@ -129,12 +38,20 @@
                 </section>
             </div>
 
-            {% if not count_values == object_list.count %}
-                {% with object_list.count|subtract:count_values as count_diff %}
+            {% if not count_values == submission_count %}
+                {% with submission_count|subtract:count_values as count_diff %}
                     <p class="mt-1 text-xs text-fg-muted" aria-live="polite">
-                        {% blocktrans %}*{{ count_diff }} submission(s) lack requested amount fields or data and are not included.{% endblocktrans %}
+                        {% blocktrans trimmed %}
+                            * Total {{ submission_count }} but {{ count_diff }} submission(s)
+                            lack requested amount fields or data and are not included.
+                        {% endblocktrans %}
                     </p>
                 {% endwith %}
+            {% endif %}
+            {% if anonymized_excluded_count %}
+                <p class="mt-1 text-xs text-fg-muted" aria-live="polite">
+                    {% blocktrans with count=anonymized_excluded_count %}{{ count }} anonymized submission(s) are excluded because the active filter does not apply to anonymized data.{% endblocktrans %}
+                </p>
             {% endif %}
         </section>
     </div>

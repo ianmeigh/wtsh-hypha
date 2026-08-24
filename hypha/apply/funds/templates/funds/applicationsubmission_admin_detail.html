@@ -42,7 +42,7 @@
             <div class="card-actions">
                 {% include 'review/includes/review_button.html' with submission=object class="grow" %}
 
-                {% if request.user.is_apply_staff and object.has_any_reviews %}
+                {% if request.user.is_apply_staff and object.reviews.exists %}
                     <a
                         href="{% url 'apply:submissions:reviews:list' submission_pk=object.id %}"
                         class="btn btn-outline grow"
@@ -126,7 +126,7 @@
                     class="btn btn-sm btn-soft btn-secondary"
                     hx-get="{% url 'funds:submissions:create_reminder' pk=object.pk %}"
                     hx-target="#htmx-modal"
-                    aria-label="{% trans "Create new reminder" %}"
+                    aria-label="{% trans 'Create new reminder' %}"
                 >
                     {% heroicon_micro "plus" stroke_width=5 aria_hidden=true %}
                     Add

@@ -3,7 +3,7 @@ import zipfile
 from io import BytesIO
 
 from django.core.files import File
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
@@ -61,10 +61,9 @@ def render_as_pdf(
     )
     pdf = html_to_pdf(html)
 
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f"attachment; filename={filename}"
-    response.write(pdf.read())
-    return response
+    return FileResponse(
+        pdf, as_attachment=True, filename=filename, content_type="application/pdf"
+    )
 
 
 def merge_pdf(origin_pdf: BytesIO, input_pdf: BytesIO) -> File:
@@ -78,7 +77,7 @@ def merge_pdf(origin_pdf: BytesIO, input_pdf: BytesIO) -> File:
         Return a File object containing the merged PDF and with the same name as the
         original PDF.
     """
-    merger = PdfWriter(clone_from=BytesIO(origin_pdf.read()))
+    merger = PdfWriter(clone_from=origin_pdf)
     merger.append(PdfReader(input_pdf))
 
     output_pdf = BytesIO()
