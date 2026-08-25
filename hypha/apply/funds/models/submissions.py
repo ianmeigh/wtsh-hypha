@@ -1110,6 +1110,7 @@ class ApplicationSubmission(
             timestamps.append(self.live_revision.timestamp)
         return max(timestamps)
 
+
 class AnonymizedSubmissionQueryset(models.QuerySet):
     def value(self):
         return self.aggregate(Count("value"), Avg("value"), Sum("value"))
