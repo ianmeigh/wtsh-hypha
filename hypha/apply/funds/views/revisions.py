@@ -59,9 +59,14 @@ class RevisionListView(ListView):
             An [`ApplicationRevision`][hypha.apply.funds.models.ApplicationRevision] QuerySet
         """
         self.submission = get_object_or_404(
-            ApplicationSubmission, id=self.kwargs["submission_pk"]
+            ApplicationSubmission.objects.defer("form_data"),
+            id=self.kwargs["submission_pk"],
         )
-        self.queryset = get_revisions(submission=self.submission)
+        self.queryset = (
+            get_revisions(submission=self.submission)
+            .select_related("author", "submission")
+            .defer("form_data", "submission__form_data")
+        )
 
         return super().get_queryset()
 
@@ -169,8 +174,7 @@ class RevisionCompareView(DetailView):
 
                 sanitized_answers.append(f"{heading}{answer}")
             except AttributeError:
-                # If it fails to match for some reason just cleanse the fields but leave h2s
-                answer = nh3.clean(answer, attributes={}, tags={"h2"})
-                sanitized_answers.append(field)
+                # If it fails to match for some reason just cleanse the field but leave h2s
+                sanitized_answers.append(nh3.clean(field, attributes={}, tags={"h2"}))
 
         return sanitized_answers

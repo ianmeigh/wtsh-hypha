@@ -1,6 +1,9 @@
 # Docker
 
-Require most recent version of [Docker](https://www.docker.com/get-started).
+Requires the most recent version of [Docker](https://www.docker.com/get-started) and Python's [Fabric](https://www.fabfile.org/)/[Invoke](https://www.pyinvoke.org/) (`pip install fabric`), used to drive the `fab` commands below.
+
+!!! info
+    This page describes the docker setup for this fork (`torchbox/wtsh-hypha`), which differs from upstream Hypha's own docker docs — it uses the root `docker-compose.yml` and the tasks in `fabfile.py`, not a separate `docker/compose.yaml`.
 
 ## Domains for local development
 
@@ -15,126 +18,147 @@ Add this to your `/etc/hosts` file.
 The "[test](https://en.wikipedia.org/wiki/.test)" TLD is safe to use, it's reserved for testing purposes.
 
 !!! info
-    All examples from now on will use the `hypha.test` domains.
+    All examples from now on will use the `hypha.test` domain.
 
 ## Get the code
 
 ```shell
-git clone https://github.com/HyphaApp/hypha.git hypha
+git clone git@github.com:torchbox/wtsh-hypha.git
 
-cd hypha
+cd wtsh-hypha
 ```
 
-## Create media directory
+There's no need to create a `media/` directory manually — Django creates it automatically on startup (`hypha/settings/base.py:662`).
 
-In production media is stored on AWS S3 but for local development you need a "media" directory.
+### Local settings overrides
+
+Copy the example local settings file (this is gitignored, so it's yours to customise and won't be committed):
 
 ```shell
-mkdir media
+mv hypha/settings/local.py.example hypha/settings/local.py
+```
+
+Then add these two settings to it — without them, logging in fails with `Forbidden (403) CSRF verification failed`, because Django doesn't trust `hypha.test:8000` as a POST origin by default (the same issue is documented for the Vagrant setup in `ansible/README.md`, under "Fixing CSRF errors on the admin login"):
+
+```python
+WAGTAILADMIN_BASE_URL = 'http://hypha.test:8000'
+CSRF_TRUSTED_ORIGINS = ['http://hypha.test:8000']
 ```
 
 ## Docker
 
-### Build the Docker images
+### Build the docker images
 
-Run the docker compose command to build the images. This will take some time.
-
-If you need to rebuild the images to get a later version just run the "build" again.
+Run this first, and again any time `Dockerfile` or the Python/Node dependencies change:
 
 ```shell
-docker compose --file docker/compose.yaml build
+fab build
 ```
+
+This pulls up-to-date base images, removes any existing `web` container and its `node_modules` volume (so Node dependencies get reinitialised from the image), then builds the images.
 
 ### Start the docker environment
 
-To start the docker containers you use the "up --watch" command. This command you will use each time you want to start up and use this docker environment.
-
 ```shell
-docker compose --file docker/compose.yaml  up --watch
+fab start
 ```
 
-This will run "npm watch" as well as the "runserver_plus". All code changes to hypha will be synced in to the container thanks to the docker watch functionality.
+This runs `docker compose up --detach` — the containers start in the background rather than attaching to your terminal. The `web` container itself doesn't run a server by default; its `dev` build stage just idles (`Dockerfile:248`) so you can exec into it and run things interactively.
+
+### Set up the database (first run only)
+
+On a fresh database, apply migrations and create the DB-backed cache table (used by `CACHES["default"]` and `CACHES["django_file_form"]`, see `hypha/settings/base.py:338-352`) — `migrate` does not create this table, it needs Django's separate `createcachetable` command:
+
+```shell
+docker compose exec web ./manage.py migrate
+docker compose exec web ./manage.py createcachetable
+docker compose exec web ./manage.py sync_roles
+```
+
+Skipping `createcachetable` results in `django.db.utils.ProgrammingError: relation "database_cache" does not exist` the first time something reads or writes the cache. In production this step is handled automatically as part of every deploy (`ansible/roles/hypha/templates/deploy.sh.jinja2:42`) — there's currently no local equivalent, so it has to be run manually once per fresh database.
+
+### Run the app
+
+Get a shell in the `web` container:
+
+```shell
+fab sh
+```
+
+Then, inside that shell, start the actual dev processes:
+
+```shell
+make serve
+```
+
+This runs `runserver_plus`, the frontend watchers (`npm run watch:*`), and `mkdocs serve` together via `tandem` (`Makefile:26-31`).
 
 ### Access the docker environment
 
-Go to [http://hypha.test:9001/](http://hypha.test:9001/)
+- The Wagtail/Django site: [http://hypha.test:8000/](http://hypha.test:8000/)
+- These docs, served live: [http://localhost:8001/](http://localhost:8001/)
 
-### Stop the docker environment.
+(`docker-compose.yml` maps host port `8000` to the app's internal port `9001`, and host port `8001` to the docs' internal port `8001`.)
 
-Press `ctrl+c` in the terminal window.
+### Stop the docker environment
+
+Press `ctrl+c` in the `make serve` terminal to stop the dev processes, then `exit` the shell. To stop the containers themselves:
+
+```shell
+fab stop
+```
 
 ### Run commands in the docker environment
 
-To get bash shell on the container that runs the Django app, use this command.
+To get a bash shell on the container that runs the Django app:
 
 ```shell
-docker exec -it hypha-django-dev bash
+fab sh
 ```
 
-Here you can issue django commands as normal.
-
-You can also run commands directly, e.g. "uv sync" like this.
+or, targeting a different service (e.g. the database):
 
 ```shell
-docker exec hypha-django-dev uv sync
+fab sh --service=db
 ```
 
-To get a shell on the container that runs Postgres, use this command.
+Once in the `web` container, issue Django commands as normal:
 
 ```shell
-docker exec -it hypha-postgres-dev bash
+./manage.py migrate
 ```
 
-## Restore a database dump in Docker
-
-We will use the "public/sandbox\_db.dump" for this example. That is a good start in any case, you get some example content etc.
-
-First copy the sandbox db dump into the container that runs Postgres.
+You can also run one-off commands directly from the host without an interactive shell:
 
 ```shell
-docker cp public/sandbox_db.dump hypha-postgres-dev:/tmp/
+docker compose exec web ./manage.py migrate
 ```
 
-Get a shell on the container that runs Postgres.
+To get a shell on the container that runs Postgres:
 
 ```shell
-docker exec -it hypha-postgres-dev bash
+fab sh --service=db
 ```
 
-Before being able to work on this database, you have to drop and prevent any other connections to it.
+## Restore a database dump
+
+`fabfile.py` has a dedicated task for this — it drops and recreates the local database, restores the dump, and (optionally) rewrites the default site's hostname so local links don't point at a staging/live site:
 
 ```shell
-psql --username=hypha -c "REVOKE CONNECT ON DATABASE hypha FROM public;SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'hypha';"
+fab import-data path/to/dump.file
 ```
 
-With this done, drop and then create the hypha database and run the pg restore command like this.
+Pass an empty hostname to skip that last step:
 
 ```shell
-dropdb --username=hypha hypha
+fab import-data path/to/dump.file --new-default-site-hostname=""
 ```
+
+After restoring, run migrations and sync roles as usual (see [Run commands in the docker environment](#run-commands-in-the-docker-environment) above):
 
 ```shell
-createdb --username=hypha hypha
+docker compose exec web ./manage.py migrate
+docker compose exec web ./manage.py sync_roles
 ```
 
-```shell
-pg_restore --verbose --clean --if-exists --no-acl --no-owner --username=hypha --dbname=hypha /tmp/sandbox_db.dump
-```
-
-Exit the container shell.
-
-```shell
-exit
-```
-
-Run the "migrate" and "sync_roles" commands inside the py container to update the db.
-
-```shell
-docker exec hypha-django-dev python3 manage.py migrate
-```
-
-```shell
-docker exec hypha-django-dev python3 manage.py sync_roles
-```
-
-Done.
+Note that any superuser accounts you'd previously created locally will have been wiped and will need to be recreated.

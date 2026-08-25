@@ -15,7 +15,7 @@ ALLOWED_HOSTS = [
     "hypha.test",
 ]
 
-RUNSERVERPLUS_SERVER_ADDRESS_PORT = "127.0.0.1:9001"
+RUNSERVERPLUS_SERVER_ADDRESS_PORT = "0.0.0.0:9001"
 
 WAGTAILADMIN_BASE_URL = "http://127.0.0.1:9001"
 
@@ -113,8 +113,8 @@ if LOCAL_FILE_LOGGING:
     }
 
 
-# Debug Toolbar
-# https://django-debug-toolbar.readthedocs.io/en/latest/index.html
+# Add development apps like Debug Toolbar.
+# https://django-debug-toolbar.readthedocs.io/en/latest/
 if DEBUG:
     INSTALLED_APPS = [
         *INSTALLED_APPS,

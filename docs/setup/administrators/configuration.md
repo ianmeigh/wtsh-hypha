@@ -48,9 +48,15 @@ The corresponding locale dir is named: en, en_GB, en_US
 
 ----
 
-Number of seconds that password reset and account activation links are valid (default 259200, 3 days).
+Number of seconds that password reset links are valid (default 259200, 3 days).
 
     PASSWORD_RESET_TIMEOUT = env.int('PASSWORD_RESET_TIMEOUT', 259200)
+
+----
+
+Number of seconds that account activation links are valid (default 900, 15 minutes).
+
+    PASSWORD_ACTIVATION_TIMEOUT = env.int("PASSWORD_ACTIVATION_TIMEOUT", 900)
 
 ----
 
@@ -213,7 +219,7 @@ Staff e-mail domain. Used for OAUTH2 whitelist default value and staff account c
 
 ----
 
-Should staff identities be obscured from Applicants & Partners (ie. comments will be ORG_LONG_NAME rather than "John Doe").
+Should staff identities be obscured from Applicants (ie. comments will be ORG_LONG_NAME rather than "John Doe").
 
    HIDE_STAFF_IDENTITY = env.bool('HIDE_STAFF_IDENTITY', False)
 
@@ -277,19 +283,17 @@ On Heroku, set to true if deploying to Heroku.
 
 ----
 
-Secure cookies
-
-Set this to enable Djangos settings for secure cookies.
-
-    COOKIE_SECURE = env.bool('COOKIE_SECURE', False)
-
-----
-
 Machine translation settings for applications
 
 See [here](machine-translations.md) for more information on setting up machine translations
 
     APPLICATION_TRANSLATIONS_ENABLED = env.bool("APPLICATION_TRANSLATIONS_ENABLED", False)
+
+----
+
+Should submission anonymization be enabled. Allows for both manual anonymization and utilization of cleanup commands to anonymize by time thresholds.
+
+    SUBMISSION_ANONYMIZATION_ENABLED = env.bool("SUBMISSION_ANONYMIZATION_ENABLED", False)
 
 ----
 

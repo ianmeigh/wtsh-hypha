@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 
 # Application definition
 INSTALLED_APPS = [
-    "scout_apm.django",
     "hypha.cookieconsent",
     "hypha.images",
     "hypha.core.apps.CoreAppConfig",
@@ -16,7 +15,7 @@ INSTALLED_APPS = [
     "hypha.apply.dashboard",
     "hypha.apply.flags",
     "hypha.home",
-    "hypha.apply.users",
+    "hypha.apply.users.apps.UsersConfig",
     "hypha.apply.review",
     "hypha.apply.determinations",
     "hypha.apply.stream_forms",
@@ -26,10 +25,10 @@ INSTALLED_APPS = [
     "hypha.apply.projects.apps.ProjectsConfig",
     "hypha.apply.projects.reports.apps.ReportsConfig",
     "hypha.apply.wtsh",
+    "hypha.apply.apps.CustomUsersAppConfig",
     "social_django",
     "django_htmx",
     "heroicons",
-    "django_web_components",  # Depreciated in favour of django-cotton.
     "django_cotton.apps.SimpleAppConfig",
     "wagtail_modeladmin",
     "wagtail.contrib.settings",
@@ -37,7 +36,6 @@ INSTALLED_APPS = [
     "wagtail.contrib.redirects",
     "wagtail.embeds",
     "wagtail.sites",
-    "wagtail.users",
     "wagtail.snippets",
     "wagtail.documents",
     "wagtail.images",
@@ -47,10 +45,10 @@ INSTALLED_APPS = [
     "anymail",
     "modelcluster",
     "taggit",
-    "django_extensions",
     "tinymce",
     "django_tables2",
     "django_filters",
+    "django_extensions",
     "hypha.addressfield",
     "django_nh3",
     "viewflow",
@@ -62,7 +60,7 @@ INSTALLED_APPS = [
     "django_file_form",
     "rolepermissions",
     "hijack",
-    "elevate",  # https://django-elevate.readthedocs.io/
+    "hypha.elevate",
     "pagedown",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -83,7 +81,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "elevate.middleware.ElevateMiddleware",
+    "hypha.elevate.middleware.ElevateMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -205,6 +203,9 @@ AUTH_USER_MODEL = "users.User"
 
 LOGIN_URL = "users:passwordless_login_signup"
 LOGIN_REDIRECT_URL = "dashboard:dashboard"
+
+# Keeps complaining about "social:complete" and "two_factor:setup_complete".
+SILENCED_SYSTEM_CHECKS = ["urls.W003"]
 
 # https://django-elevate.readthedocs.io/en/latest/config/index.html#configuration
 ELEVATE_URL = "users:elevate"

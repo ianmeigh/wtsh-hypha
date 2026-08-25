@@ -1,4 +1,3 @@
-import datetime
 import json
 
 from django.conf import settings
@@ -153,9 +152,7 @@ class CoApplicantInviteAcceptView(View):
     def post(self, args, **kwargs):
         action = self.request.POST.get("action")
         if action == "accept":
-            self.invite.status = CoApplicantInviteStatus.ACCEPTED
-            self.invite.responded_on = datetime.datetime.now()
-            self.invite.save(update_fields=["status", "responded_on"])
+            self.invite.respond(CoApplicantInviteStatus.ACCEPTED)
 
             # handle auto login/signup
             user, created = User.objects.get_or_create(
@@ -194,16 +191,14 @@ class CoApplicantInviteAcceptView(View):
 
                 login(self.request, user)
             return HttpResponseClientRedirect(self.get_success_url())
-        self.invite.status = CoApplicantInviteStatus.REJECTED
-        self.invite.responded_on = datetime.datetime.now()
-        self.invite.save(update_fields=["status", "responded_on"])
+        self.invite.respond(CoApplicantInviteStatus.REJECTED)
         if self.request.user.is_authenticated:
             return HttpResponseClientRedirect(reverse_lazy("dashboard:dashboard"))
         return HttpResponseClientRedirect("/")
 
     def get_success_url(self):
         return reverse_lazy(
-            "apply:submissions:detail", args=(self.invite.submission.pk,)
+            "apply:submissions:detail", args=(self.invite.submission_id,)
         )
 
 
@@ -330,7 +325,7 @@ def list_coapplicant_invites(request, pk):
 
     # check if pending invites have expired, update status
     for invite in co_applicant_invites.filter(status=CoApplicantInviteStatus.PENDING):
-        if (
+        if invite.invited_at and (
             int((timezone.now() - invite.invited_at).total_seconds())
             > CoApplicantInviteTokenGenerator().TIMEOUT
         ):

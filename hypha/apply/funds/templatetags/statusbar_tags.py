@@ -30,7 +30,7 @@ def status_bar(
         "phases": phases,
         "current_phase": current_phase,
         "class": css_class,
-        "public": user.is_applicant or user.is_partner,
+        "public": user.is_applicant,
     }
 
 

@@ -13,6 +13,8 @@ CACHES = {
 
 # WAGTAILADMIN_BASE_URL = 'http://hypha.test'
 
+# CSRF_TRUSTED_ORIGINS = ['http://hypha.test:8000']
+
 # Turn off DEBUG mode.
 # DEBUG = False
 

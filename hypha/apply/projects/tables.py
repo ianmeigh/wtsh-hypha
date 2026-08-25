@@ -2,10 +2,10 @@ import json
 
 import django_tables2 as tables
 from django.conf import settings
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django_tables2.utils import A
 from heroicons.templatetags.heroicons import heroicon_outline
@@ -25,14 +25,10 @@ def render_invoice_actions(table, record):
 
 
 class BaseInvoiceTable(tables.Table):
-    invoice_number = tables.LinkColumn(
-        "funds:projects:invoice-detail",
+    invoice_number = tables.Column(
         verbose_name=_("Invoice #"),
-        args=[tables.utils.A("project__submission__pk"), tables.utils.A("pk")],
+        linkify=True,
         attrs={
-            "td": {
-                "class": "js-title",  # using title as class because of batch-actions.js
-            },
             "a": {
                 "class": "link link-hover text-h4 font-semibold break-words line-clamp-2 max-w-md",
             },
@@ -49,11 +45,26 @@ class BaseInvoiceTable(tables.Table):
 
     class Meta:
         row_attrs = {
-            "onclick": lambda record: f"window.location.href='{reverse('funds:projects:invoice-detail', args=[record.project.submission.pk, record.pk])}'",
+            "onclick": lambda record: (
+                f"window.location.href='{record.get_absolute_url()}'"
+            ),
             "class": "table-row-link",
             "role": "button",
             "tabindex": "0",  # Accessibility
         }
+
+    def render_tags(self, record):
+        tags = record.tags.all()
+        if not tags:
+            return mark_safe("<span class='text-base-content/40'>—</span>")
+        badges = "".join(
+            format_html(
+                "<span class='badge badge-soft badge-neutral whitespace-nowrap'>{}</span>",
+                tag.name,
+            )
+            for tag in tags
+        )
+        return mark_safe(f"<div class='flex flex-wrap gap-1'>{badges}</div>")
 
     def render_requested_at(self, record):
         return format_html(
@@ -101,6 +112,7 @@ class InvoiceDashboardTable(BaseInvoiceTable):
 
 class FinanceInvoiceTable(BaseInvoiceTable):
     vendor_name = tables.Column(verbose_name=_("Vendor Name"), empty_values=())
+    tags = tables.Column(verbose_name=_("Tags"), orderable=False, empty_values=())
     selected = LabeledCheckboxColumn(
         accessor=A("pk"),
         attrs={
@@ -118,6 +130,7 @@ class FinanceInvoiceTable(BaseInvoiceTable):
             "status",
             "requested_at",
             "invoice_amount",
+            "tags",
         ]
         model = Invoice
         orderable = True
@@ -126,6 +139,7 @@ class FinanceInvoiceTable(BaseInvoiceTable):
         template_name = "application_projects/tables/table.html"
         attrs = {"class": "table border-x border-b mb-2 invoices-table"}
         row_attrs = {
+            **BaseInvoiceTable.Meta.row_attrs,
             "data-record-id": lambda record: record.id,
         }
 
@@ -135,6 +149,7 @@ class FinanceInvoiceTable(BaseInvoiceTable):
 
 class AdminInvoiceListTable(BaseInvoiceTable):
     project = tables.Column(verbose_name=_("Project Name"))
+    tags = tables.Column(verbose_name=_("Tags"), orderable=False, empty_values=())
     selected = LabeledCheckboxColumn(
         accessor=A("pk"),
         attrs={
@@ -154,6 +169,7 @@ class AdminInvoiceListTable(BaseInvoiceTable):
             "status",
             "requested_at",
             "project",
+            "tags",
         ]
         model = Invoice
         orderable = True
@@ -162,6 +178,7 @@ class AdminInvoiceListTable(BaseInvoiceTable):
         template_name = "application_projects/tables/table.html"
         attrs = {"class": "table border-x border-b mb-2 invoices-table"}
         row_attrs = {
+            **BaseInvoiceTable.Meta.row_attrs,
             "data-record-id": lambda record: record.id,
         }
 
@@ -172,7 +189,7 @@ class AdminInvoiceListTable(BaseInvoiceTable):
 class BaseProjectsTable(tables.Table):
     title = tables.LinkColumn(
         "funds:submissions:project",
-        args=[tables.utils.A("application_id")],
+        args=[tables.utils.A("submission_id"), tables.utils.A("pk")],
         attrs={
             "a": {
                 "class": "link link-hover text-h4 font-semibold break-words line-clamp-2 max-w-md"
@@ -182,7 +199,9 @@ class BaseProjectsTable(tables.Table):
     status = tables.Column(
         verbose_name=_("Status"), accessor="get_status_display", order_by=("status",)
     )
+    contractor = tables.Column(verbose_name=_("Contractor"), accessor="user")
     fund = tables.Column(verbose_name=_("Fund"), accessor="submission__page")
+    contract_number = tables.Column(verbose_name=_("Contract #"), default="-")
     reporting = tables.Column(verbose_name=_("Reporting"), accessor="pk")
     last_payment_request = RelativeTimeColumn()
     end_date = RelativeTimeColumn(verbose_name=_("End date"), accessor="proposed_end")
@@ -202,14 +221,15 @@ class BaseProjectsTable(tables.Table):
             return "-"
 
         if record.report_config.is_up_to_date():
-            return "Up to date"
+            return _("Up to date")
 
         if record.report_config.has_very_late_reports():
             display = f"<span class='text-red-500 inline-block align-text-bottom me-1'>{heroicon_outline(name='exclamation-triangle', size=20)}</span>"
         else:
             display = ""
 
-        display += f"{record.report_config.outstanding_reports()} outstanding"
+        outstanding_count = record.report_config.outstanding_reports()
+        display += gettext("{count} outstanding").format(count=outstanding_count)
         return mark_safe(display)
 
 
@@ -253,7 +273,10 @@ class PAFForReviewDashboardTable(tables.Table):
     )
     title = tables.LinkColumn(
         "funds:submissions:project",
-        args=[tables.utils.A("application_id")],
+        args=[
+            tables.utils.A("project__submission_id"),
+            tables.utils.A("project__pk"),
+        ],
         orderable=False,
     )
     status = tables.Column(verbose_name=_("Status"), accessor="pk", orderable=False)
@@ -296,7 +319,9 @@ class ProjectsListTable(BaseProjectsTable):
             "title",
             "status",
             "lead",
+            "contractor",
             "fund",
+            "contract_number",
             "reporting",
             "last_payment_request",
             "end_date",

@@ -161,7 +161,6 @@ class AccessFormData:
         for field in self.form_fields:
             if isinstance(field.block, UploadableMediaBlock):
                 files[field.id] = self.data(field.id) or []
-                self.form_data.pop(field.id, None)
         return files
 
     @classmethod
@@ -227,11 +226,9 @@ class AccessFormData:
 
     @property
     def question_text_field_ids(self):
-        file_fields = list(self.file_field_ids)
+        file_fields = set(self.file_field_ids)
         for field_id, field in self.fields.items():
-            if field_id in file_fields:
-                pass
-            elif isinstance(field.block, FormFieldBlock):
+            if field_id not in file_fields and isinstance(field.block, FormFieldBlock):
                 yield field_id
 
     @property
@@ -321,7 +318,10 @@ class AccessFormData:
             )
             for i, answer in enumerate(filter(None, answers))
         ]
-        return "".join(render_data).replace("</section>", "") + "</section>"
+        joined = "".join(render_data).replace("</section>", "")
+        if include_question and render_data:
+            return joined + "</section>"
+        return joined
 
     def render_answer(self, field_id, include_question=False):
         try:

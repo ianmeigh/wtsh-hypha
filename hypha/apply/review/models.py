@@ -10,7 +10,6 @@ from hypha.apply.funds.models.mixins import AccessFormData
 from hypha.apply.funds.workflows.constants import PHASES_MAPPING
 from hypha.apply.stream_forms.models import BaseStreamForm
 from hypha.apply.users.roles import (
-    PARTNER_GROUP_NAME,
     REVIEWER_GROUP_NAME,
     STAFF_GROUP_NAME,
 )
@@ -43,7 +42,7 @@ class ReviewFormFieldsMixin(models.Model):
     class Meta:
         abstract = True
 
-    form_fields = StreamField(ReviewCustomFormFieldsBlock(), use_json_field=True)
+    form_fields = StreamField(ReviewCustomFormFieldsBlock())
 
     @property
     def score_fields(self):
@@ -88,6 +87,10 @@ class ReviewForm(ReviewFormFieldsMixin, models.Model):
         FieldPanel("form_fields"),
     ]
 
+    class Meta:
+        verbose_name = _("review form")
+        verbose_name_plural = _("review forms")
+
     def __str__(self):
         return self.name
 
@@ -104,9 +107,6 @@ class ReviewQuerySet(models.QuerySet):
 
     def by_reviewers(self):
         return self.submitted()._by_group(REVIEWER_GROUP_NAME)
-
-    def by_partners(self):
-        return self.submitted()._by_group(PARTNER_GROUP_NAME)
 
     def by_user(self, user):
         return self.submitted().filter(author__reviewer=user).order_by("-created_at")
@@ -167,16 +167,16 @@ class Review(ReviewFormFieldsMixin, BaseStreamForm, AccessFormData, models.Model
     form_data = models.JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     recommendation = models.IntegerField(
-        verbose_name=_("Recommendation"), choices=RECOMMENDATION_CHOICES, default=0
+        verbose_name=_("recommendation"), choices=RECOMMENDATION_CHOICES, default=0
     )
     score = models.DecimalField(max_digits=10, decimal_places=1, default=0)
-    is_draft = models.BooleanField(default=False, verbose_name=_("Draft"))
+    is_draft = models.BooleanField(default=False, verbose_name=_("draft"))
     created_at = models.DateTimeField(
-        verbose_name=_("Creation time"), auto_now_add=True
+        verbose_name=_("creation time"), auto_now_add=True
     )
-    updated_at = models.DateTimeField(verbose_name=_("Update time"), auto_now=True)
+    updated_at = models.DateTimeField(verbose_name=_("update time"), auto_now=True)
     visibility = models.CharField(
-        verbose_name=_("Visibility"),
+        verbose_name=_("visibility"),
         choices=VISIBILITY.items(),
         default=PRIVATE,
         max_length=10,
@@ -186,6 +186,8 @@ class Review(ReviewFormFieldsMixin, BaseStreamForm, AccessFormData, models.Model
 
     class Meta:
         unique_together = ("author", "submission")
+        verbose_name = _("review")
+        verbose_name_plural = _("reviews")
 
     @property
     def outcome(self):
@@ -209,7 +211,7 @@ class Review(ReviewFormFieldsMixin, BaseStreamForm, AccessFormData, models.Model
         return reverse(
             "apply:submissions:reviews:review",
             args=(
-                self.submission.pk,
+                self.submission_id,
                 self.id,
             ),
         )
@@ -264,6 +266,8 @@ class ReviewOpinion(models.Model):
 
     class Meta:
         unique_together = ("author", "review")
+        verbose_name = _("review opinion")
+        verbose_name_plural = _("review opinions")
 
     def __str__(self):
         return f"Review Opinion for {self.review}"

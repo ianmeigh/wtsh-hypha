@@ -16,24 +16,6 @@ class MultiCheckboxesWidget(forms.SelectMultiple):
         super().__init__(*args, **kwargs)
 
 
-class MetaTermWidget(forms.SelectMultiple):
-    def create_option(
-        self, name, value, label, selected, index, subindex=None, attrs=None
-    ):
-        disabled = False
-
-        if isinstance(label, dict):
-            label, disabled = label.get("label"), label.get("disabled")
-
-        option_dict = super().create_option(
-            name, value, label, selected, index, subindex=subindex, attrs=attrs
-        )
-
-        if disabled:
-            option_dict["attrs"]["disabled"] = "disabled"
-        return option_dict
-
-
 class LocalizedCurrencyWidget(forms.NumberInput):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("attrs", {}).setdefault("min", 0)

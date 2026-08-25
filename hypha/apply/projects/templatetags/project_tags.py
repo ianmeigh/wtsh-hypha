@@ -28,9 +28,10 @@ def project_show_reports_section(project):
 
 @register.simple_tag
 def user_can_skip_pafapproval_process(project, user):
-    if project.status == DRAFT and (user.is_apply_staff or user.is_apply_staff_admin):
-        return no_pafreviewer_role()
-    return False
+    permission, _ = has_permission(
+        "skip_pafapproval_process", user, object=project, raise_exception=False
+    )
+    return permission
 
 
 @register.simple_tag
@@ -39,6 +40,18 @@ def user_can_access_project(project, user):
         "project_access", user, object=project, raise_exception=False
     )
     return permission
+
+
+@register.simple_tag
+def accessible_projects(submission, user):
+    """Return the submission's projects the user is allowed to access."""
+    return [
+        project
+        for project in submission.projects.all()
+        if has_permission(
+            "project_access", user, object=project, raise_exception=False
+        )[0]
+    ]
 
 
 @register.simple_tag
@@ -171,7 +184,7 @@ def user_next_step_on_project(project, user, request=None):
             else:
                 matched_roles = PAFReviewersRole.objects.annotate(
                     roles_count=Count("user_roles")
-                ).filter(roles_count=len(user.groups.all()))
+                ).filter(roles_count=user.groups.count())
                 for group in user.groups.all():
                     matched_roles = matched_roles.filter(user_roles__id=group.id)
                 if not matched_roles:

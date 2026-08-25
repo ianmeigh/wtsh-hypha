@@ -58,9 +58,9 @@
         <!-- alpine.js end -->
 
         <!-- Modules for supporting <relative-time>, <filter-input> and <calendar-date> elements -->
-        <script type="module" src="{% static 'js/esm/github-relative-time-element-4-4-8.js' %}"></script>
+        <script type="module" src="{% static 'js/esm/github-relative-time-element-5-3-0.js' %}"></script>
         <script type="module" src="{% static 'js/esm/github-filter-input-element-0-1-1.js' %}"></script>
-        <script type="module" src="{% static 'js/esm/cally-0-8-0.js' %}"></script>
+        <script type="module" src="{% static 'js/esm/cally-0-9-2.js' %}"></script>
         <script defer src="{% static 'js/behaviours/prose-cleanup.js' %}"></script>
 
         {% include "includes/head_end.html" %}
@@ -88,7 +88,7 @@
         {% block footer %}{% endblock footer %}
 
         {% block scroll_to_top %}
-            {% #scroll-to-top %}
+            <c-scroll-to-top />
         {% endblock scroll_to_top %}
 
         {% cookie_banner %}
@@ -131,7 +131,7 @@
 
         <!-- choices select -->
         <script type="module">
-            import Choices from "{% static 'js/esm/choices.js-11-1-0.js' %}";
+            import Choices from "{% static 'js/esm/choices.js-11-2-3.js' %}";
 
             htmx.onLoad(function() {
                 const selectElements = document.querySelectorAll("[data-js-choices]");
@@ -142,6 +142,7 @@
                             shouldSort: false,
                             allowHTML: true,
                             removeItemButton: true,
+                            placeholderValue: selectElement.dataset.placeholder || "",
                         });
                         selectElement.hasChoicesInstance = true;
                     };
@@ -149,12 +150,12 @@
 
                 const choicesElements = document.querySelectorAll(".choices__input--cloned")
                 choicesElements.forEach((choiceElement) => {
-                    const inputPlaceholder = choiceElement.getAttribute("placeholder");
+                    const inputPlaceholder = choiceElement.getAttribute("placeholder") ?? "";
                     // Get the computed min-width of the input element otherwise it reset to 1
                     const minWidth = window.getComputedStyle(choiceElement).getPropertyValue("min-width");
                     choiceElement.addEventListener("focus", () => {
                         if (choiceElement) {
-                            choiceElement.placeholder = "Search..."
+                            choiceElement.placeholder = "{% trans 'Search...' %}"
                             choiceElement.style.minWidth = '7ch';
                         }
                     });
@@ -178,10 +179,6 @@
             <template x-init="$nextTick(() => {$dispatch('notice', {type: '{{ message.tags }}', text: '{{ message }}'})})"></template>
         {% endfor %}
 
-        <!-- We still need jQuery for a few custom scripts, will be removed soon -->
-        <!-- Please do not add new features that require jQuery! -->
-        <script src="{% static 'js/vendor/jquery.min.js' %}"></script>
-
         <!-- Needed for most forms so load it here once. -->
         <script src="{% static 'file_form/file_form.min.js' %}"></script>
         <script src="{% static 'js/file-uploads.js' %}"></script>
@@ -203,6 +200,15 @@
                         denyUrls: {{ SENTRY_DENY_URLS|safe }},
                         tracesSampleRate: {{ SENTRY_TRACES_SAMPLE_RATE }}
                     });
+                });
+            </script>
+        {% endif %}
+        {% if not request.session.user_timezone %}
+            <script>
+                fetch("{% url 'users:set_timezone' %}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}'},
+                    body: 'user_timezone=' + encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)
                 });
             </script>
         {% endif %}

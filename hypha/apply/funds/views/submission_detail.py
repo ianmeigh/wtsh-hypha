@@ -12,6 +12,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import (
     DetailView,
@@ -32,7 +33,6 @@ from hypha.core.models import SystemSettings
 
 from ..models import (
     ApplicationSubmission,
-    ReviewerSettings,
 )
 from ..permissions import (
     can_alter_archived_submissions,
@@ -52,6 +52,11 @@ if settings.APPLICATION_TRANSLATIONS_ENABLED:
 class AdminSubmissionDetailView(ActivityContextMixin, DetailView):
     template_name_suffix = "_admin_detail"
     model = ApplicationSubmission
+
+    def get_object(self, queryset=None):
+        if not hasattr(self, "_object_cache"):
+            self._object_cache = super().get_object(queryset)
+        return self._object_cache
 
     def dispatch(self, request, *args, **kwargs):
         submission = self.get_object()
@@ -115,6 +120,11 @@ class ReviewerSubmissionDetailView(ActivityContextMixin, DetailView):
     template_name_suffix = "_reviewer_detail"
     model = ApplicationSubmission
 
+    def get_object(self, queryset=None):
+        if not hasattr(self, "_object_cache"):
+            self._object_cache = super().get_object(queryset)
+        return self._object_cache
+
     def dispatch(self, request, *args, **kwargs):
         submission = self.get_object()
         # If the requesting user submitted the application, return the Applicant view.
@@ -132,49 +142,17 @@ class ReviewerSubmissionDetailView(ActivityContextMixin, DetailView):
             "submission_view", request.user, object=submission, raise_exception=True
         )
 
-        reviewer_settings = ReviewerSettings.for_request(request)
-        if reviewer_settings.use_settings:
-            queryset = ApplicationSubmission.objects.for_reviewer_settings(
-                request.user, reviewer_settings
-            )
-            # Reviewer can't view submission which is not listed in ReviewerSubmissionsTable
-            if not queryset.filter(id=submission.id).exists():
-                raise PermissionDenied
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class PartnerSubmissionDetailView(ActivityContextMixin, DetailView):
-    model = ApplicationSubmission
-
-    def get_object(self):
-        return super().get_object().from_draft()
-
-    def dispatch(self, request, *args, **kwargs):
-        submission = self.get_object()
-        permission, _ = has_permission(
-            "submission_view", request.user, object=submission, raise_exception=True
-        )
-        # If the requesting user submitted the application, return the Applicant view.
-        # Partners may sometimes be applicants as well.
-        # or if requesting user is a co-applicant to application, return the Applicant view.
-        if (
-            submission.user == request.user
-            or submission.co_applicants.filter(user=request.user).exists()
-        ):
-            return ApplicantSubmissionDetailView.as_view()(request, *args, **kwargs)
-        # Only allow partners in the submission they are added as partners
-        partner_has_access = submission.partners.filter(pk=request.user.pk).exists()
-        if not partner_has_access:
-            raise PermissionDenied
-        if submission.status == DRAFT_STATE:
-            raise Http404
         return super().dispatch(request, *args, **kwargs)
 
 
 class CommunitySubmissionDetailView(ActivityContextMixin, DetailView):
     template_name_suffix = "_community_detail"
     model = ApplicationSubmission
+
+    def get_object(self, queryset=None):
+        if not hasattr(self, "_object_cache"):
+            self._object_cache = super().get_object(queryset)
+        return self._object_cache
 
     def dispatch(self, request, *args, **kwargs):
         submission = self.get_object()
@@ -201,7 +179,9 @@ class ApplicantSubmissionDetailView(ActivityContextMixin, DetailView):
     model = ApplicationSubmission
 
     def get_object(self):
-        return super().get_object().from_draft()
+        if not hasattr(self, "_object_cache"):
+            self._object_cache = super().get_object().from_draft()
+        return self._object_cache
 
     def dispatch(self, request, *args, **kwargs):
         submission = self.get_object()
@@ -220,7 +200,6 @@ class ApplicantSubmissionDetailView(ActivityContextMixin, DetailView):
 class SubmissionDetailView(ViewDispatcher):
     admin_view = AdminSubmissionDetailView
     reviewer_view = ReviewerSubmissionDetailView
-    partner_view = PartnerSubmissionDetailView
     community_view = CommunitySubmissionDetailView
     applicant_view = ApplicantSubmissionDetailView
 
@@ -331,7 +310,7 @@ class SubmissionDetailPDFView(SingleObjectMixin, View):
         # Removed for WTSH because it messes the layout and is not needed:
         # context["lead"] = self.object.lead
         context["show_header"] = True
-        context["header_title"] = "Submission details"
+        context["header_title"] = _("Submission details")
         template_path = "funds/submission-pdf.html"
         return render_as_pdf(
             request=self.request,

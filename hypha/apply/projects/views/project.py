@@ -11,7 +11,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
 from django.urls import reverse
@@ -40,6 +40,7 @@ from hypha.apply.activity.adapters.utils import get_users_for_groups
 from hypha.apply.activity.messaging import MESSAGES, messenger
 from hypha.apply.activity.models import ACTION, ALL, COMMENT, TEAM, Activity
 from hypha.apply.activity.views import ActivityContextMixin
+from hypha.apply.funds.models import ApplicationSubmission
 from hypha.apply.funds.models.co_applicants import CoApplicantProjectPermission
 from hypha.apply.stream_forms.models import BaseStreamForm
 from hypha.apply.todo.options import (
@@ -84,6 +85,7 @@ from ..forms import (
     SetPendingForm,
     SkipPAFApprovalProcessForm,
     SubmitContractDocumentsForm,
+    UpdateProjectContractNumberForm,
     UpdateProjectDatesForm,
     UpdateProjectLeadForm,
     UpdateProjectTitleForm,
@@ -118,13 +120,14 @@ from ..utils import (
 )
 
 
-class ProjectBySubmissionIdMixin:
+class ProjectByIdMixin:
     def get_object(self):
-        return get_object_or_404(Project, submission__id=self.kwargs["pk"])
+        pk = self.kwargs.get("project_pk", self.kwargs["pk"])
+        return get_object_or_404(Project, pk=pk)
 
 
 @method_decorator(staff_required, name="dispatch")
-class SendForApprovalView(ProjectBySubmissionIdMixin, View):
+class SendForApprovalView(ProjectByIdMixin, View):
     form_class = SetPendingForm
     model = Project
     template_name = "application_projects/modals/send_for_approval.html"
@@ -280,7 +283,7 @@ class SendForApprovalView(ProjectBySubmissionIdMixin, View):
 
 
 # PROJECT DOCUMENTS
-class UploadDocumentView(ProjectBySubmissionIdMixin, CreateView):
+class UploadDocumentView(ProjectByIdMixin, CreateView):
     form_class = UploadDocumentForm
     model = Project
     template_name = "application_projects/modals/supporting_documents_upload.html"
@@ -348,7 +351,7 @@ class UploadDocumentView(ProjectBySubmissionIdMixin, CreateView):
 
 
 @method_decorator(staff_required, name="dispatch")
-class RemoveDocumentView(ProjectBySubmissionIdMixin, View):
+class RemoveDocumentView(ProjectByIdMixin, View):
     model = Project
 
     def delete(self, *args, **kwargs):
@@ -370,7 +373,7 @@ class RemoveDocumentView(ProjectBySubmissionIdMixin, View):
 
 
 @method_decorator(login_required, name="dispatch")
-class RemoveContractDocumentView(ProjectBySubmissionIdMixin, View):
+class RemoveContractDocumentView(ProjectByIdMixin, View):
     model = Project
 
     def dispatch(self, request, *args, **kwargs):
@@ -404,7 +407,7 @@ class RemoveContractDocumentView(ProjectBySubmissionIdMixin, View):
 
 
 @method_decorator(staff_required, name="dispatch")
-class UpdateLeadView(ProjectBySubmissionIdMixin, View):
+class UpdateLeadView(ProjectByIdMixin, View):
     model = Project
     form_class = UpdateProjectLeadForm
     template_name = "application_projects/modals/lead_update.html"
@@ -470,7 +473,7 @@ def update_project_title(request, pk):
     if not request.user.is_apply_staff:
         raise PermissionDenied
 
-    project = get_object_or_404(Project, submission__id=pk)
+    project = get_object_or_404(Project, pk=pk)
     template_name = "application_projects/modals/project_title_update.html"
 
     form = UpdateProjectTitleForm(instance=project)
@@ -514,7 +517,7 @@ def update_project_dates(request, pk):
     if not request.user.is_apply_staff:
         raise PermissionDenied
 
-    project = get_object_or_404(Project, submission__id=pk)
+    project = get_object_or_404(Project, pk=pk)
     template_name = "application_projects/modals/project_dates_update.html"
 
     form = UpdateProjectDatesForm(instance=project)
@@ -545,10 +548,52 @@ def update_project_dates(request, pk):
     return render(request, template_name, ctx)
 
 
+@login_required
+def update_project_contract_number(request, pk):
+    if not (request.user.is_org_faculty):
+        raise PermissionDenied
+
+    project = get_object_or_404(Project, submission__id=pk)
+    template_name = "application_projects/modals/project_contract_number_update.html"
+
+    form = UpdateProjectContractNumberForm(instance=project)
+
+    if request.method == "POST":
+        form = UpdateProjectContractNumberForm(request.POST, instance=project)
+
+        if form.is_valid():
+            form.save()
+            messenger(
+                MESSAGES.UPDATE_PROJECT_CONTRACT_NUMBER,
+                request=request,
+                user=request.user,
+                source=project,
+            )
+
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps(
+                        {
+                            "informationUpdated": None,
+                            "showMessage": _("Contract number has been updated"),
+                        }
+                    ),
+                },
+            )
+
+    ctx = {
+        "form": form,
+        "value": _("Update"),
+        "object": project,
+    }
+    return render(request, template_name, ctx)
+
+
 # CONTRACTS
 
 
-class ContractsMixin(ProjectBySubmissionIdMixin):
+class ContractsMixin(ProjectByIdMixin):
     def get_context_data(self, **kwargs):
         project = self.get_object()
         contracts = project.contracts.select_related(
@@ -573,7 +618,7 @@ class ContractsMixin(ProjectBySubmissionIdMixin):
 
 
 @method_decorator(staff_required, name="dispatch")
-class ApproveContractView(ProjectBySubmissionIdMixin, View):
+class ApproveContractView(ProjectByIdMixin, View):
     form_class = ApproveContractForm
     model = Contract
     template_name = "application_projects/modals/approve_contract.html"
@@ -668,18 +713,17 @@ class ApproveContractView(ProjectBySubmissionIdMixin, View):
 
 
 @method_decorator(login_required, name="dispatch")
-class UploadContractView(ProjectBySubmissionIdMixin, View):
+class UploadContractView(ProjectByIdMixin, View):
     model = Project
     form_class = UploadContractForm
     template_name = "application_projects/modals/upload_contract.html"
 
     def dispatch(self, request, *args, **kwargs):
         self.project = self.get_object()
-        permission, _ = has_permission(
-            "contract_upload", request.user, object=self.project
+        has_permission(
+            "contract_upload", request.user, object=self.project, raise_exception=True
         )
-        if permission:
-            return super().dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get(self, *args, **kwargs):
         form = self.get_form()
@@ -818,13 +862,19 @@ class UploadContractView(ProjectBySubmissionIdMixin, View):
         )
 
 
+@method_decorator(login_required, name="dispatch")
 class SkipPAFApprovalProcessView(UpdateView):
     model = Project
     form_class = SkipPAFApprovalProcessForm
 
     def dispatch(self, request, *args, **kwargs):
         self.object = get_object_or_404(Project, id=kwargs.get("pk"))
-        # permissions
+        has_permission(
+            "skip_pafapproval_process",
+            request.user,
+            object=self.object,
+            raise_exception=True,
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -878,13 +928,13 @@ class SubmitContractDocumentsView(View):
     template_name = "application_projects/modals/submit_contracting_documents.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.project = get_object_or_404(Project, submission__id=kwargs.get("pk"))
+        self.project = get_object_or_404(Project, pk=kwargs.get("pk"))
         if ContractDocumentCategory.objects.filter(
             ~Q(contract_packet_files__project=self.project) & Q(required=True)
         ).exists():
             raise PermissionDenied
         contract = self.project.contracts.order_by("-created_at").first()
-        permission, _ = has_permission(
+        has_permission(
             "submit_contract_documents",
             request.user,
             object=self.project,
@@ -946,7 +996,7 @@ class SubmitContractDocumentsView(View):
 
 
 @method_decorator(login_required, name="dispatch")
-class UploadContractDocumentView(ProjectBySubmissionIdMixin, View):
+class UploadContractDocumentView(ProjectByIdMixin, View):
     form_class = UploadContractDocumentForm
     model = Project
     context_name = "contract_document_form"
@@ -1023,8 +1073,8 @@ class ChangePAFStatusView(View):
     template_name = "application_projects/modals/pafstatus_update.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.object = get_object_or_404(Project, submission__pk=self.kwargs["pk"])
-        permission, _ = has_permission(
+        self.object = get_object_or_404(Project, pk=self.kwargs["pk"])
+        has_permission(
             "paf_status_update",
             self.request.user,
             object=self.object,
@@ -1074,7 +1124,7 @@ class ChangePAFStatusView(View):
                     else:
                         # should never be the case but still to avoid 500.
                         raise PermissionDenied(
-                            "User don't have project form approver roles"
+                            _("User don't have project form approver roles")
                         )
 
             paf_status = form.cleaned_data.get("paf_status")
@@ -1273,8 +1323,8 @@ class ChangeProjectstatusView(View):
     template_name = "application_projects/modals/project_status_update.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.project = get_object_or_404(Project, submission__id=self.kwargs["pk"])
-        permission, _ = has_permission(
+        self.project = get_object_or_404(Project, pk=self.kwargs["pk"])
+        has_permission(
             "project_status_update", request.user, self.project, raise_exception=True
         )
         return super().dispatch(request, *args, **kwargs)
@@ -1338,8 +1388,8 @@ class UpdateAssignApproversView(View):
     template_name = "application_projects/modals/assign_pafapprovers.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.project = get_object_or_404(Project, submission__id=self.kwargs["pk"])
-        permission, _ = has_permission(
+        self.project = get_object_or_404(Project, pk=self.kwargs["pk"])
+        has_permission(
             "update_paf_assigned_approvers",
             request.user,
             self.project,
@@ -1446,8 +1496,8 @@ class UpdatePAFApproversView(View):
     template_name = "application_projects/modals/update_pafapprovers.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.project = get_object_or_404(Project, submission__id=self.kwargs["pk"])
-        permission, _ = has_permission(
+        self.project = get_object_or_404(Project, pk=self.kwargs["pk"])
+        has_permission(
             "paf_approvers_update",
             request.user,
             self.project,
@@ -1626,7 +1676,12 @@ class UpdatePAFApproversView(View):
         )
 
 
-class BaseProjectDetailView(ReportingMixin, ProjectBySubmissionIdMixin, DetailView):
+class BaseProjectDetailView(ReportingMixin, ProjectByIdMixin, DetailView):
+    def get_object(self, queryset=None):
+        if not hasattr(self, "_object_cache"):
+            self._object_cache = super().get_object()
+        return self._object_cache
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["statuses"] = get_project_status_choices()
@@ -1639,6 +1694,8 @@ class BaseProjectDetailView(ReportingMixin, ProjectBySubmissionIdMixin, DetailVi
         context["contracting_documents_configured"] = (
             True if ContractDocumentCategory.objects.count() else False
         )
+        if hasattr(self.object, "report_config"):
+            self.object.report_config.ensure_due_report()
         return context
 
 
@@ -1650,11 +1707,11 @@ class AdminProjectDetailView(
 ):
     model = Project
     template_name_suffix = "_admin_detail"
-    form_views = []
+    form_views: list = []
 
     def dispatch(self, *args, **kwargs):
         project = self.get_object()
-        permission, _ = has_permission(
+        has_permission(
             "project_access", self.request.user, object=project, raise_exception=True
         )
         return super().dispatch(*args, **kwargs)
@@ -1679,11 +1736,11 @@ class ApplicantProjectDetailView(
 ):
     model = Project
     template_name_suffix = "_detail"
-    form_views = []
+    form_views: list = []
 
     def dispatch(self, request, *args, **kwargs):
         project = self.get_object()
-        permission, _ = has_permission(
+        has_permission(
             "project_access", request.user, object=project, raise_exception=True
         )
         return super().dispatch(request, *args, **kwargs)
@@ -1709,10 +1766,47 @@ class ProjectDetailView(ViewDispatcher):
     applicant_view = ApplicantProjectDetailView
 
 
+@login_required
+def project_detail_redirect(request, pk):
+    """Redirect the legacy /projects/<pk>/ path to the submission-nested URL."""
+    project = get_object_or_404(Project, pk=pk)
+    return HttpResponseRedirect(project.get_absolute_url())
+
+
 @method_decorator(login_required, name="dispatch")
-class ProjectPrivateMediaView(
-    ProjectBySubmissionIdMixin, UserPassesTestMixin, PrivateMediaView
-):
+class SubmissionProjectsView(View):
+    """Landing page for a submission's projects.
+
+    A submission can have several projects (one per funding "bucket").
+    Redirect straight to the project when only one is accessible, otherwise
+    list them so the user can pick.
+    """
+
+    def dispatch(self, request, pk, *args, **kwargs):
+        submission = get_object_or_404(ApplicationSubmission, pk=pk)
+        projects = [
+            project
+            for project in submission.projects.all()
+            if has_permission(
+                "project_access",
+                request.user,
+                object=project,
+                raise_exception=False,
+            )[0]
+        ]
+        if not projects:
+            raise Http404(_("No projects for this submission"))
+        if len(projects) == 1:
+            return HttpResponseRedirect(projects[0].get_absolute_url())
+        return render(
+            request,
+            "application_projects/submission_projects.html",
+            {"submission": submission, "projects": projects},
+        )
+
+
+@method_decorator(login_required, name="dispatch")
+class ProjectPrivateMediaView(ProjectByIdMixin, UserPassesTestMixin, PrivateMediaView):
     """
     See also hypha/apply/funds/files.py
     """
@@ -1759,13 +1853,13 @@ class ProjectPrivateMediaView(
 
 
 @method_decorator(login_required, name="dispatch")
-class CategoryTemplatePrivateMediaView(ProjectBySubmissionIdMixin, PrivateMediaView):
+class CategoryTemplatePrivateMediaView(ProjectByIdMixin, PrivateMediaView):
     raise_exception = True
 
     def dispatch(self, *args, **kwargs):
         self.project = self.get_object()
         self.category_type = kwargs["type"]
-        permission, _ = has_permission(
+        has_permission(
             "project_access",
             self.request.user,
             object=self.project,
@@ -1786,9 +1880,7 @@ class CategoryTemplatePrivateMediaView(ProjectBySubmissionIdMixin, PrivateMediaV
 
 
 @method_decorator(login_required, name="dispatch")
-class ContractPrivateMediaView(
-    ProjectBySubmissionIdMixin, UserPassesTestMixin, PrivateMediaView
-):
+class ContractPrivateMediaView(ProjectByIdMixin, UserPassesTestMixin, PrivateMediaView):
     raise_exception = True
 
     def dispatch(self, *args, **kwargs):
@@ -1823,13 +1915,13 @@ class ContractPrivateMediaView(
 
 
 @method_decorator(login_required, name="dispatch")
-class ContractDocumentPrivateMediaView(ProjectBySubmissionIdMixin, PrivateMediaView):
+class ContractDocumentPrivateMediaView(ProjectByIdMixin, PrivateMediaView):
     raise_exception = True
 
     def dispatch(self, *args, **kwargs):
         self.project = self.get_object()
         self.document = ContractPacketFile.objects.get(pk=kwargs["file_pk"])
-        permission, _ = has_permission(
+        has_permission(
             "view_contract_documents",
             self.request.user,
             object=self.project,
@@ -1848,19 +1940,19 @@ class ContractDocumentPrivateMediaView(ProjectBySubmissionIdMixin, PrivateMediaV
 
 
 @method_decorator(staff_or_finance_or_contracting_required, name="dispatch")
-class ProjectDetailApprovalView(ProjectBySubmissionIdMixin, DetailView):
+class ProjectDetailApprovalView(ProjectByIdMixin, DetailView):
     model = Project
     template_name_suffix = "_approval_detail"
 
 
 @method_decorator(staff_or_finance_or_contracting_required, name="dispatch")
-class ProjectSOWView(ProjectBySubmissionIdMixin, DetailView):
+class ProjectSOWView(ProjectByIdMixin, DetailView):
     model = Project
     template_name_suffix = "_sow_detail"
 
 
 @method_decorator(staff_or_finance_or_contracting_required, name="dispatch")
-class ProjectSOWDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, View):
+class ProjectSOWDownloadView(ProjectByIdMixin, SingleObjectMixin, View):
     model = Project
 
     def get(self, request, *args, **kwargs):
@@ -1905,10 +1997,11 @@ class ProjectSOWDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, View
         new_parser = HtmlToDocx()
         new_parser.add_html_to_document(html, document)
         document.save(buf)
+        buf.seek(0)
 
-        response = HttpResponse(buf.getvalue(), content_type="application/docx")
-        response["Content-Disposition"] = f"attachment; filename={filename}"
-        return response
+        return FileResponse(
+            buf, as_attachment=True, filename=filename, content_type="application/docx"
+        )
 
     def get_slugified_file_name(self, export_type):
         return f"{datetime.date.today().strftime('%Y%m%d')}-{slugify(self.object.title)}.{export_type}"
@@ -1935,7 +2028,7 @@ class ProjectSOWDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, View
 
 
 @method_decorator(staff_or_finance_or_contracting_required, name="dispatch")
-class ProjectDetailDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, View):
+class ProjectDetailDownloadView(ProjectByIdMixin, SingleObjectMixin, View):
     model = Project
 
     def get(self, request, *args, **kwargs):
@@ -1973,10 +2066,11 @@ class ProjectDetailDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, V
         new_parser = HtmlToDocx()
         new_parser.add_html_to_document(html, document)
         document.save(buf)
+        buf.seek(0)
 
-        response = HttpResponse(buf.getvalue(), content_type="application/docx")
-        response["Content-Disposition"] = f"attachment; filename={filename}"
-        return response
+        return FileResponse(
+            buf, as_attachment=True, filename=filename, content_type="application/docx"
+        )
 
     def get_slugified_file_name(self, export_type):
         return f"{datetime.date.today().strftime('%Y%m%d')}-{slugify(self.object.title)}.{export_type}"
@@ -1995,7 +2089,7 @@ class ProjectDetailDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, V
         context["submission"] = self.object.submission
         context["submission_link"] = self.request.build_absolute_uri(
             reverse(
-                "apply:submissions:detail", kwargs={"pk": self.object.submission.id}
+                "apply:submissions:detail", kwargs={"pk": self.object.submission_id}
             )
         )
         context["supporting_documents"] = self.get_supporting_documents(self.object)
@@ -2022,13 +2116,14 @@ class ProjectDetailDownloadView(ProjectBySubmissionIdMixin, SingleObjectMixin, V
             documents_dict[packet_file.title] = self.request.build_absolute_uri(
                 reverse(
                     "apply:projects:document",
-                    kwargs={"pk": project.submission.id, "file_pk": packet_file.id},
+                    kwargs={"pk": project.pk, "file_pk": packet_file.id},
                 )
             )
         return documents_dict
 
 
-class ProjectFormsEditView(BaseStreamForm, ProjectBySubmissionIdMixin, UpdateView):
+@method_decorator(staff_or_finance_or_contracting_required, name="dispatch")
+class ProjectFormsEditView(BaseStreamForm, ProjectByIdMixin, UpdateView):
     model = Project
 
     def buttons(self):
@@ -2037,11 +2132,7 @@ class ProjectFormsEditView(BaseStreamForm, ProjectBySubmissionIdMixin, UpdateVie
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        permission, msg = has_permission(
-            "paf_edit", self.request.user, self.object, raise_exception=True
-        )
-        if not permission:
-            messages.info(self.request, msg)
+        has_permission("paf_edit", self.request.user, self.object, raise_exception=True)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -2273,3 +2364,14 @@ class ProjectListView(SingleTableMixin, FilterView):
     queryset = Project.objects.for_table()
     table_class = ProjectsListTable
     template_name = "application_projects/project_list.html"
+
+    excluded_fields = settings.PROJECTS_TABLE_EXCLUDED_FIELDS
+
+    def get_filterset_kwargs(self, filterset_class, **kwargs):
+        new_kwargs = super().get_filterset_kwargs(filterset_class)
+        new_kwargs["exclude"] = self.excluded_fields
+        new_kwargs.update(kwargs)
+        return new_kwargs
+
+    def get_table_kwargs(self):
+        return {"exclude": self.excluded_fields}

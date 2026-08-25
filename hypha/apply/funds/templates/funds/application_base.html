@@ -35,7 +35,9 @@
             {# the page has no open rounds and we arent on a round page #}
             {% verbose_name page as name %}
             <h4>
-                {% blocktrans %}Sorry, this {{ name }} is not currently accepting applications.{% endblocktrans %}
+                {% blocktrans trimmed %}
+                    Sorry, this {{ name }} is not currently accepting applications.
+                {% endblocktrans %}
                 <a href="{% url 'home' %}">
                     {% trans "See other funds" %} {% heroicon_mini "arrow-right" class="inline mb-0.5 align-text-bottom" %}
                 </a>
@@ -51,7 +53,12 @@
                     {% trans "Application guide" %}
                 </a>
             {% endif %}
-            <form class="form application-form" action="/test500/" method="POST" enctype="multipart/form-data">
+            <form class="form application-form" action="/test500/" method="post" enctype="multipart/form-data"
+                  data-copy-btn-label="{% trans 'Copy questions to clipboard' %}"
+                  data-copy-btn-title="{% trans 'Copies all the questions and user input to the clipboard in plain text.' %}"
+                  data-copy-word-limit="{% trans 'Limit this field to %s words.' %}"
+                  data-copy-selected="{% trans '(selected)' %}"
+            >
                 {% csrf_token %}
                 {% for field in form %}
                     {% if field.field %}
@@ -100,6 +107,7 @@
                         <button
                             class="w-full sm:w-auto btn btn-primary"
                             type="submit"
+                            name="submit"
                             disabled
                         >
                             {% trans "Submit for review" %}

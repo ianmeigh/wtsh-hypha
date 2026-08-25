@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from hypha.apply.activity import tasks
-from hypha.apply.activity.models import ALL, APPLICANT_PARTNERS, PARTNER
 from hypha.apply.funds.models.co_applicants import (
     CoApplicantProjectPermission,
     CoApplicantRole,
@@ -65,8 +64,6 @@ class EmailAdapter(AdapterBase):
         MESSAGES.READY_FOR_REVIEW: "handle_ready_for_review",
         MESSAGES.REVIEWERS_UPDATED: "handle_ready_for_review",
         MESSAGES.BATCH_REVIEWERS_UPDATED: "handle_batch_ready_for_review",
-        MESSAGES.PARTNERS_UPDATED: "partners_updated_applicant",
-        MESSAGES.PARTNERS_UPDATED_PARTNER: "partners_updated_partner",
         MESSAGES.UPLOAD_CONTRACT: "messages/email/contract_uploaded.html",
         MESSAGES.SUBMIT_CONTRACT_DOCUMENTS: "messages/email/submit_contract_documents.html",
         MESSAGES.CREATED_PROJECT: "messages/email/project_created.html",
@@ -84,6 +81,7 @@ class EmailAdapter(AdapterBase):
         MESSAGES.REPORT_NOTIFY: "messages/email/report_notify.html",
         MESSAGES.REVIEW_REMINDER: "messages/email/ready_to_review.html",
         MESSAGES.PROJECT_TRANSITION: "handle_project_transition",
+        MESSAGES.UPDATE_AUTHOR: "messages/email/author_updated.html",
     }
 
     def get_subject(self, message_type, source):
@@ -163,20 +161,17 @@ class EmailAdapter(AdapterBase):
             "subject": self.get_subject(message_type, source),
         }
 
-    def handle_transition(self, new_phase, source, old_phase=None, **kwargs):
+    def handle_transition(self, old_phase, source, **kwargs):
         from hypha.apply.funds.workflows import PHASES
 
         submission = source
 
-        if old_phase is None:
-            old_phase = submission.phase
+        new_phase = submission.phase
 
         # Retrieve status index to see if we are going forward or backward.
         old_index = list(dict(PHASES).keys()).index(old_phase.name)
         target_index = list(dict(PHASES).keys()).index(new_phase.name)
         is_forward = old_index < target_index
-        print("NEW PHASE")
-        print(new_phase.public_name)
 
         kwargs["old_phase"] = old_phase.public_name
         kwargs["new_phase"] = new_phase.public_name
@@ -212,9 +207,8 @@ class EmailAdapter(AdapterBase):
         kwargs.pop("source")
         for submission in submissions:
             old_phase = transitions[submission.id]
-            new_phase = submission.phase
             return self.handle_transition(
-                old_phase=old_phase, new_phase=new_phase, source=submission, **kwargs
+                old_phase=old_phase, source=submission, **kwargs
             )
 
     def handle_project_transition(self, source, **kwargs):
@@ -333,10 +327,6 @@ class EmailAdapter(AdapterBase):
         if message_type == MESSAGES.INVITE_COAPPLICANT:
             related = kwargs.get("related", None)
             return [related.invited_user_email]
-
-        if message_type == MESSAGES.PARTNERS_UPDATED_PARTNER:
-            partners = kwargs["added"]
-            return [partner.email for partner in partners]
 
         if message_type == MESSAGES.APPROVE_PAF:
             from hypha.apply.projects.models.project import ProjectSettings
@@ -494,12 +484,6 @@ class EmailAdapter(AdapterBase):
                 ).values_list("user__email", flat=True)
                 recipients: List[str] = [source.user.email, *co_applicants]
 
-                if partners := list(source.partners.values_list("email", flat=True)):
-                    if comment.visibility == PARTNER:
-                        recipients = partners
-                    elif comment.visibility in [APPLICANT_PARTNERS, ALL]:
-                        recipients += partners
-
             # Comment handling for Projects
             elif isinstance(source, Project):
                 # co_applciants with Comment permission
@@ -562,23 +546,6 @@ class EmailAdapter(AdapterBase):
             if source.phase.permissions.can_review(reviewer)
             and not reviewer.is_apply_staff
         ]
-
-    def partners_updated_applicant(self, added, removed, **kwargs):
-        if added:
-            return self.render_message(
-                "messages/email/partners_update_applicant.html", added=added, **kwargs
-            )
-
-    def partners_updated_partner(self, added, removed, **kwargs):
-        if added:
-            recipient = kwargs["recipient"]
-            # Pass the user object to render_message rather than the email string
-            recipient_obj = User.objects.get(email__exact=recipient)
-            kwargs["recipient"] = recipient_obj
-
-            return self.render_message(
-                "messages/email/partners_update_partner.html", **kwargs
-            )
 
     def render_message(self, template, **kwargs):
         with language(settings.LANGUAGE_CODE):

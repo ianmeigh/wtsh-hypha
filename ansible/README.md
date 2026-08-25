@@ -66,9 +66,15 @@ wtsh-hypha.localhost:2222 ansible_user=vagrant ansible_ssh_private_key_file=.vag
 ```
 (I used the `wtsh-hypha.localhost` domain here which should automatically resolve to `localhost` without any configuration, if that's not the case you can set up something in `/etc/hosts` or use `127.0.0.1` or `localhost` as the domain)
 
+For local Vagrant development you can also disable SSH host key checking, since the VM host key changes each time you recreate it. Add `ansible_ssh_common_args='-o StrictHostKeyChecking=no'` to the inventory line:
+```
+wtsh-hypha.localhost:2222 ansible_user=vagrant ansible_ssh_private_key_file=.vagrant/machines/default/virtualbox/private_key ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+Do not use this for production servers.
+
 ### The secrets file
 
-Secrets that should not appear in public source code (like `SECRET_KEY` or various passwords and API keys) should go in a `/srv/hypha/hypha.env` file on the server. This playbook will only create this file if it's missing (with some default values). If you need to make changes to it later on, you must edit the file by hand directly on the server.
+Secrets that should not appear in public source code (like `SECRET_KEY` or various passwords and API keys) should go in a `/srv/wtsh-hypha/hypha.env` file on the server. This playbook will only create this file if it's missing (with some default values). If you need to make changes to it later on, you must edit the file by hand directly on the server.
 
 
 ### Running the playbook
@@ -78,3 +84,58 @@ Once the `inventory.ini` file is created, setting up the server should be as eas
 uvx --from ansible ansible-playbook -i inventory.ini setup.yml
 ```
 (that's assuming you have uv installed, otherwise you'll have to install `ansible` manually, probably via `pip` + `virtualenv`)
+
+If this is the first time connecting to the host, SSH will refuse the connection because the host key isn't trusted yet. Add it to your known hosts first:
+```
+ssh-keyscan <host> >> ~/.ssh/known_hosts
+```
+For the Vagrant setup that would be:
+```
+ssh-keyscan -p 2222 wtsh-hypha.localhost >> ~/.ssh/known_hosts
+```
+
+### Deploying the site
+
+The playbook sets up the server but does not start the web container — that requires a deploy. SSH into the server and run the deploy script:
+```
+sudo /srv/wtsh-hypha/deploy.sh
+```
+For the Vagrant setup, SSH in first with:
+```
+vagrant ssh
+```
+
+The deploy script pulls the Docker image, starts the web and celery services, and runs post-deploy commands like `migrate`.
+
+### Accessing the site locally
+
+The nginx vhost is configured to respond to the `hypha.test` domain. Add it to your `/etc/hosts` so your browser can resolve it:
+```
+echo "127.0.0.1 hypha.test" | sudo tee -a /etc/hosts
+```
+The Vagrant setup forwards port 80 on the VM to port 8080 on your machine, so the site will be available at `http://hypha.test:8080`.
+
+### Using the site in English
+
+The deployment is configured for German by default. If you prefer to work in English, you can enable the language switcher on your local VM and add English as an available language:
+
+```
+vagrant ssh
+sudo sed -i 's/LANGUAGES = .*/LANGUAGES = [("en", "English"), ("de", "Deutsch")]/' /srv/wtsh-hypha/local_settings.py
+sudo sed -i 's/LANGUAGE_SWITCHER = False/LANGUAGE_SWITCHER = True/' /srv/wtsh-hypha/local_settings.py
+sudo systemctl restart wtsh-hypha-web
+```
+
+A language toggle will then appear on the site. Note that not all strings may be translated — this feature was previously disabled due to some rough edges in Hypha's multi-language support.
+
+### Fixing CSRF errors on the admin login
+
+Django's CSRF protection will block the admin login POST because `hypha.test:8080` is not recognised as a trusted origin. Add it to `local_settings.py` on the VM and restart the web service:
+```
+vagrant ssh
+sudo tee -a /srv/wtsh-hypha/local_settings.py <<'EOF'
+
+CSRF_TRUSTED_ORIGINS = ["http://hypha.test:8080"]
+EOF
+sudo systemctl restart wtsh-hypha-web
+```

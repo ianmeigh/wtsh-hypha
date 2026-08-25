@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load heroicons primaryactions_tags translate_tags %}
+{% load can from permission_tags %}
 
 <h2 class="mb-2 card-title">{% trans "Actions to take" %}</h2>
 
@@ -16,14 +17,18 @@
     </a>
 {% else %}
     <div class="flex flex-col gap-2">
-        {% if PROJECTS_ENABLED %}
-            {% if object.accepted_for_funding and not object.project %}
+        {% if PROJECTS_ENABLED and object.accepted_for_funding %}
+            {% if not object.projects.exists or PROJECTS_ALLOW_MULTIPLE %}
                 <button
                     class="btn btn-primary btn-block"
                     hx-get="{% url 'funds:submissions:create_project' pk=object.pk %}"
                     hx-target="#htmx-modal"
                 >
-                    {% trans "Create project" %}
+                    {% if object.projects.exists %}
+                        {% trans "Add another project" %}
+                    {% else %}
+                        {% trans "Create project" %}
+                    {% endif %}
                 </button>
             {% endif %}
         {% endif %}
@@ -82,12 +87,6 @@
 
         <button
             class="btn btn-outline grow"
-            hx-get="{% url 'funds:submissions:partners_update' pk=object.pk %}"
-            hx-target="#htmx-modal"
-        >{% trans "Partners" %}</button>
-
-        <button
-            class="btn btn-outline grow"
             hx-get="{% url 'funds:submissions:lead_update' pk=object.pk %}"
             hx-target="#htmx-modal"
         >{% trans "Lead" %}</button>
@@ -136,6 +135,11 @@
                 {% trans "Create Reminder" %}
             </button>
 
+            <button class="w-full btn btn-outline" hx-get="{% url 'funds:submissions:change_author' pk=object.pk %}" hx-target="#htmx-modal" >
+                {% heroicon_outline "users" aria_hidden="true" size=16 stroke_width=2 class="size-4" %}
+                {% trans "Change Author" %}
+            </button>
+
             <a
                 class="w-full btn btn-outline"
                 href="{% url "apply:submissions:download" pk=object.pk %}"
@@ -165,6 +169,29 @@
                 </a>
             {% endif %}
 
+            {% can "delete_submission" object as can_delete_submission %}
+            {% if can_delete_submission %}
+                {% if SUBMISSION_ANONYMIZATION_ENABLED %}
+                    <a
+                        class="w-full btn btn-outline btn-error"
+                        href="{% url 'funds:submissions:anonymize' object.id %}"
+                        hx-get="{% url 'funds:submissions:anonymize' object.id %}"
+                        hx-target="#htmx-modal"
+                    >
+                        {% heroicon_micro "eye-slash" aria_hidden=true size=16 stroke_width=2 class="size-4" %}
+                        {% trans "Anonymize" %}
+                    </a>
+                {% endif %}
+                <a
+                    class="w-full btn btn-outline btn-error"
+                    href="{% url 'funds:submissions:delete' object.id %}"
+                    hx-get="{% url 'funds:submissions:delete' object.id %}"
+                    hx-target="#htmx-modal"
+                >
+                    {% heroicon_micro "trash" aria_hidden=true size=16 stroke_width=2 class="size-4" %}
+                    {% trans "Delete" %}
+                </a>
+            {% endif %}
         </div>
     </details>
 {% endif %}
