@@ -166,13 +166,15 @@ class EmailAdapter(AdapterBase):
 
         submission = source
 
+        new_phase = submission.phase
+
         # Retrieve status index to see if we are going forward or backward.
         old_index = list(dict(PHASES).keys()).index(old_phase.name)
         target_index = list(dict(PHASES).keys()).index(new_phase.name)
         is_forward = old_index < target_index
 
         kwargs["old_phase"] = old_phase.public_name
-        kwargs["new_phase"] = submission.phase.public_name
+        kwargs["new_phase"] = new_phase.public_name
 
         if is_forward:
             return self.render_message(
