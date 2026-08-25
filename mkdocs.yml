@@ -6,7 +6,7 @@ repo_name: HyphaApp/hypha
 repo_url: https://github.com/HyphaApp/hypha
 edit_uri: edit/main/docs/
 
-dev_addr: localhost:9100
+dev_addr: 0.0.0.0:8001
 site_dir: docs_build
 extra_css:
   - assets/extra.css
