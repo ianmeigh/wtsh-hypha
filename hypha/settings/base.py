@@ -214,8 +214,10 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", [])
 # https://docs.djangoproject.com/en/stable/ref/settings/#databases
 APP_NAME = env.str("APP_NAME", "hypha")
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"postgres:///{APP_NAME}", conn_max_age=600, conn_health_checks=True
+    "default": dj_database_url.parse(
+        env.str("DATABASE_URL", f"postgres:///{APP_NAME}"),
+        conn_max_age=600,
+        conn_health_checks=True,
     )
 }
 
