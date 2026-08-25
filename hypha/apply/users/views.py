@@ -689,7 +689,11 @@ class PasswordlessLoginView(CheckTokenOnPostMixin, LoginView):
     token_submit_text = _("Confirm login")
 
     def get(self, request, uidb64, token, *args, **kwargs):
-        if self.storage.current_step != "auth":
+        # current_step is None on a fresh session (no wizard step has been
+        # stored yet), which is equivalent to being on the initial "auth"
+        # step. Only a genuinely different, already-stored step (e.g. "token"
+        # mid-MFA) should be delegated to the wizard's own POST handler.
+        if self.storage.current_step not in (None, "auth"):
             return super().post(request, uidb64, token, *args, **kwargs)
         try:
             user = User.objects.get(pk=force_str(urlsafe_base64_decode(uidb64)))
