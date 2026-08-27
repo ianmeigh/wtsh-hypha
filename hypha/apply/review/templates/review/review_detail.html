@@ -3,12 +3,26 @@
 {% block title %}{% trans "Review for" %} {{ review.submission.title }}{% endblock %}
 
 {% block hero %}
+    {% if HIDE_STAFF_IDENTITY and not request.user.is_org_faculty and not request.user == review.author.reviewer %}
+        {% blocktranslate asvar review_subtitle trimmed with title=review.submission.title_text_display created=review.created_at|date:'SHORT_DATE_FORMAT' %}
+            For {{ title }} by Reviewer at {{ created }}
+        {% endblocktranslate %}
+    {% else %}
+        {% blocktranslate asvar review_subtitle trimmed with title=review.submission.title_text_display author=review.author created=review.created_at|date:'SHORT_DATE_FORMAT' %}
+            For {{ title }} by {{ author }} at {{ created }}
+        {% endblocktranslate %}
+    {% endif %}
+    {% if review.is_updated %}
+        {% blocktranslate asvar review_last_updated trimmed with updated=review.updated_at|date:'SHORT_DATE_FORMAT' %}
+            Last updated: {{ updated }}
+        {% endblocktranslate %}
+    {% endif %}
     <c-hero>
         <c-hero.header
             back_link="{{ review.submission.get_absolute_url }}"
             back_link_text="{% trans 'View application' %} #{{ review.submission.application_id }}"
             title="{% trans 'Review' %}"
-            subtitle="{% trans 'For' %} {{ review.submission.title_text_display }} {% trans 'by' %} {% if HIDE_STAFF_IDENTITY and not request.user.is_org_faculty and not request.user == review.author.reviewer %}{% trans 'Reviewer' %}{% else %}{{ review.author }}{% endif %} {% trans 'at' %} {{ review.created_at|date:'SHORT_DATE_FORMAT' }} {% if review.is_updated %}<small>({% trans 'Last updated' %}: {{ review.updated_at|date:'SHORT_DATE_FORMAT' }})</small>{% endif %}"
+            subtitle="{{ review_subtitle }}{% if review.is_updated %} <small>({{ review_last_updated }})</small>{% endif %}"
         >
         </c-hero.header>
     </c-hero>

@@ -561,7 +561,11 @@
             {% else %}
                 <div class="flex flex-col justify-center items-center py-32 px-4 mb-8 border rounded-b-box">
                     <h2 class='mb-2 text-2xl card-title'>{% trans "No results matched your search" %}</h2>
-                    <p class="text-fg-muted">{% trans "Try" %} <a href="./" hx-get="./" hx-target="#main" hx-push-url="true" hx-swap="outerHTML transition:true">{% trans "clearing" %}</a> {% trans "the current query and try again" %}.</p>
+                    <p class="text-fg-muted">
+                        {% blocktranslate trimmed %}
+                            Try <a href="./" hx-get="./" hx-target="#main" hx-push-url="true" hx-swap="outerHTML transition:true">clearing</a> the current query and try again.
+                        {% endblocktranslate %}
+                    </p>
                 </div>
             {% endif %}
         </section>

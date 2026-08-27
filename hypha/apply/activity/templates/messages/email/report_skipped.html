@@ -3,7 +3,11 @@
 {% load i18n %}
 
 {% block content %}{# fmt:off #}
-{% blocktrans %}An {{ ORG_SHORT_NAME }} staff member has marked a report as {% endblocktrans %}{% if report.skipped %}{% trans "no longer required" %}{% else %}{% trans "required" %}{% endif %}{% blocktrans with title=source.title_text_display start_date=report.start_date end_date=report.end_date %} for "{{ title }}" for period {{ start_date }} to {{ end_date }}.{% endblocktrans %}
+{% if report.skipped %}
+    {% blocktranslate with title=source.title_text_display start_date=report.start_date end_date=report.end_date %}An {{ ORG_SHORT_NAME }} staff member has marked a report as no longer required for "{{ title }}" for period {{ start_date }} to {{ end_date }}.{% endblocktranslate %}
+{% else %}
+    {% blocktranslate with title=source.title_text_display start_date=report.start_date end_date=report.end_date %}An {{ ORG_SHORT_NAME }} staff member has marked a report as required for "{{ title }}" for period {{ start_date }} to {{ end_date }}.{% endblocktranslate %}
+{% endif %}
 
 {% if not report.skipped %}
 {% trans "This report was previously not required. Please ensure you now complete the report." %}
