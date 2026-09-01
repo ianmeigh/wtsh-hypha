@@ -19,6 +19,8 @@ Usage:
 With no arguments, checks every locale/*/LC_MESSAGES/*.po file.
 """
 
+import contextlib
+import io
 import re
 import sys
 from pathlib import Path
@@ -67,8 +69,26 @@ def check_file(path: Path) -> list:
         list: a human-readable violation message per problem message found.
     """
     violations = []
-    with path.open("rb") as po_file:
-        catalog = read_po(po_file, abort_invalid=False)
+    # abort_invalid=False means babel prints a warning (plain print(),
+    # confirmed in its source - not the warnings module) and skips a
+    # message it can't parse cleanly, rather than raising - which would
+    # otherwise let a msgstr malformed enough to break .po syntax (e.g.
+    # unescaped quotes inside an injected <script> tag) slip past this
+    # check entirely instead of being flagged. Capture that output and
+    # treat it as a violation, so unparsable content fails closed instead
+    # of being silently dropped.
+    parse_warnings = io.StringIO()
+    with contextlib.redirect_stdout(parse_warnings):
+        with path.open("rb") as po_file:
+            catalog = read_po(po_file, abort_invalid=False)
+
+    captured = parse_warnings.getvalue().strip()
+    if captured:
+        violations.append(
+            f"{path}: babel could not fully parse one or more messages - "
+            "treating this as a violation, since malformed content could be "
+            f"hiding markup this check would otherwise catch:\n{captured}"
+        )
 
     for message in catalog:
         if not message.id:
