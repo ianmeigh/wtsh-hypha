@@ -289,7 +289,16 @@ def get_current_msgids() -> set:
 
 
 def list_all_keys(session: requests.Session) -> dict:
-    """Return every key currently in the Texterify project, as {name: id}."""
+    """Return every key currently in the Texterify project, as {name: id}.
+
+    Works around a Texterify import quirk in which a key created from a msgid containing
+    `\\"` comes back with a name containing a literal backslash before the quote, rather
+    than the plain `"` character the msgid actually contains. Texterify's PO importer
+    uses the raw, still-escaped substring between the file's quote delimiters as the key
+    name, instead of resolving the gettext escape sequence first. Without normalising
+    that here, any such key would permanently mismatch get_current_msgids() and be
+    misreported (and, with pruning on, deleted) as an orphan on every future push.
+    """
     keys = {}
     page = 0
     per_page = 100
@@ -303,7 +312,9 @@ def list_all_keys(session: requests.Session) -> dict:
         batch = body["data"]
         if not batch:
             break
-        keys.update({key["attributes"]["name"]: key["id"] for key in batch})
+        keys.update(
+            {key["attributes"]["name"].replace(r"\"", '"'): key["id"] for key in batch}
+        )
         if len(keys) >= body.get("meta", {}).get("total", len(keys)):
             break
         page += 1
