@@ -100,7 +100,7 @@ jobs:
           BRANCH: ${{ needs.pull-translations.outputs.branch }}
         run: |
           gh pr create \
-            --base main \
+            --base wtsh-staging \
             --head "$BRANCH" \
             --title "chore: pull translations from Texterify" \
             --body "Automated pull of updated translations from Texterify. Downloaded .po files were checked for markup not present in the source string before this PR was opened - review the diff as normal before merging."
