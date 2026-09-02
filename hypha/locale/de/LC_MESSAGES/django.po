@@ -1658,7 +1658,7 @@ msgid "Date+time field"
 msgstr "Datum+Uhrzeit-Feld"
 
 msgid "{} day"
-msgstr "tage"
+msgstr "{} tage"
 
 msgid "Days"
 msgstr ""
