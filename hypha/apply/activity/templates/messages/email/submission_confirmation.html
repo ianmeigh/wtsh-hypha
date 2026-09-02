@@ -5,7 +5,11 @@
 {% block content %}{# fmt:off #}
 {% blocktrans with title=source.title %}We appreciate your "{{ title }}" application submission to the {{ ORG_LONG_NAME }}.{% endblocktrans %}
 
-{% if source.is_draft %}{% trans "Please note that it is not submitted for review because it's still in draft." %} {% trans "You can access the draft at" %}: {{ request.scheme }}://{{ request.get_host }}{{ source.get_absolute_url }}{% else %}{% trans "We will review and reply to your submission as quickly as possible." %}{% endif %}
+{% if source.is_draft %}
+    {% blocktranslate with scheme=request.scheme host=request.get_host path=source.get_absolute_url %}Please note that it is not submitted for review because it's still in draft. You can access the draft at: {{ scheme }}://{{ host }}{{ path }}{% endblocktranslate %}
+{% else %}
+    {% trans "We will review and reply to your submission as quickly as possible." %}
+{% endif %}
 
 {% comment "Disabled for WTSH" %}
 {% trans "If you have any questions, please submit them here" %}: {{ request.scheme }}://{{ request.get_host }}{% url 'funds:submissions:comments' pk=source.pk %}

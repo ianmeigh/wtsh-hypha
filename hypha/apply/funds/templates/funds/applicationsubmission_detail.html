@@ -77,22 +77,23 @@
                     <header class="flex justify-between @container mb-2">
                         <div class="grid grid-cols-1 @md:grid-cols-2 w-full text-fg-muted text-sm gap-x-4 gap-y-2">
                             <div class="self-center line-clamp-2">
-                                {% if object.is_draft %}{% trans "Drafted " %}{% else %}{% trans "Submitted " %}{% endif %}
-                                <relative-time datetime={{ object.submit_time|date:"c" }} class="font-semibold">
-                                    {{ object.submit_time|date:"SHORT_DATETIME_FORMAT" }}
-                                </relative-time>
-                                {% trans "by" %} <strong class="max-w-md font-semibold">{% get_author_display "submitted" %}</strong>
+                                {% get_author_display "submitted" as submitted_author %}
+                                {% if object.is_draft %}
+                                    {% blocktranslate trimmed with author=submitted_author submitted_iso=object.submit_time|date:"c" submitted_display=object.submit_time|date:"SHORT_DATETIME_FORMAT" %}
+                                        Drafted <relative-time datetime={{ submitted_iso }} class="font-semibold">{{ submitted_display }}</relative-time> by <strong class="max-w-md font-semibold">{{ author }}</strong>
+                                    {% endblocktranslate %}
+                                {% else %}
+                                    {% blocktranslate trimmed with author=submitted_author submitted_iso=object.submit_time|date:"c" submitted_display=object.submit_time|date:"SHORT_DATETIME_FORMAT" %}
+                                        Submitted <relative-time datetime={{ submitted_iso }} class="font-semibold">{{ submitted_display }}</relative-time> by <strong class="max-w-md font-semibold">{{ author }}</strong>
+                                    {% endblocktranslate %}
+                                {% endif %}
                             </div>
 
                             <div class="self-center line-clamp-2">
-                                {% trans "Updated" %}
-                                <relative-time datetime={{ object.last_updated|date:"c" }} class="font-semibold">
-                                    {{ object.last_updated|date:"SHORT_DATETIME_FORMAT" }}
-                                </relative-time>
-                                {% trans "by" %}
-                                <strong class="max-w-md font-semibold">
-                                    {% get_author_display "updated" %}
-                                </strong>
+                                {% get_author_display "updated" as updated_author %}
+                                {% blocktranslate trimmed with author=updated_author updated_iso=object.last_updated|date:"c" updated_display=object.last_updated|date:"SHORT_DATETIME_FORMAT" %}
+                                    Updated <relative-time datetime={{ updated_iso }} class="font-semibold">{{ updated_display }}</relative-time> by <strong class="max-w-md font-semibold">{{ author }}</strong>
+                                {% endblocktranslate %}
                             </div>
                         </div>
 
