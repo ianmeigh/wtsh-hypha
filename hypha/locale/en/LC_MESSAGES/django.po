@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-02 13:40+0000\n"
+"POT-Creation-Date: 2026-09-02 15:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1880,25 +1880,21 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:24
-msgid "Apply NOW TEST LATER"
-msgstr ""
-
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:40
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:39
 #: hypha/apply/dashboard/templates/dashboard/community_dashboard.html:62
 #: hypha/apply/dashboard/templates/dashboard/reviewer_dashboard.html:60
 msgid "My submissions"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:60
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:59
 msgid "My projects"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:81
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:80
 msgid "My active invoices"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:92
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:91
 #: hypha/apply/dashboard/templates/dashboard/partials/applicant_submissions.html:24
 #: hypha/apply/funds/tables.py:69
 #: hypha/apply/funds/templates/submissions/all.html:355
@@ -1909,18 +1905,18 @@ msgstr ""
 msgid "Submitted"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:116
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:115
 #: hypha/apply/dashboard/templates/dashboard/finance_dashboard.html:45
 msgid "No active invoices"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:126
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:125
 #: hypha/apply/dashboard/templates/dashboard/community_dashboard.html:83
 #: hypha/apply/dashboard/templates/dashboard/reviewer_dashboard.html:81
 msgid "Submission history"
 msgstr ""
 
-#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:137
+#: hypha/apply/dashboard/templates/dashboard/applicant_dashboard.html:136
 msgid "Project history"
 msgstr ""
 
