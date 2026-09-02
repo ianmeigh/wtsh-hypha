@@ -58,7 +58,7 @@ jobs:
           # merging this PR re-trigger a source-string push for no reason
           # (Texterify never sends back anything meaningfully different for the
           # source language - see push_source_strings_to_texterify.py).
-          if git status --porcelain -- locale ':(exclude)locale/en/LC_MESSAGES/django.po' | grep -q .; then
+          if git status --porcelain -- locale ':(exclude)hypha/locale/en/LC_MESSAGES/django.po' | grep -q .; then
             branch="translations/pull-$(date -u +%Y-%m-%d)-${{ github.run_number }}-${{ github.run_attempt }}"
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "branch=$branch" >> "$GITHUB_OUTPUT"
@@ -74,7 +74,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add locale ':(exclude)locale/en/LC_MESSAGES/django.po'
+          git add hypha/locale ':(exclude)hypha/locale/en/LC_MESSAGES/django.po'
           git commit -m "chore: pull translations from Texterify"
           git push origin "$BRANCH"
 
