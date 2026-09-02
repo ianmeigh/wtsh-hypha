@@ -97,7 +97,7 @@ jobs:
           BRANCH: ${{ needs.pull-translations.outputs.branch }}
         run: |
           gh pr create \
-            --base wtsh-staging \
+            --base wtsh-main \
             --head "$BRANCH" \
             --title "chore: pull translations from Texterify" \
             --body "Automated pull of updated translations from Texterify. Review the diff as normal before merging."

@@ -24,7 +24,7 @@ name: Push source strings to Texterify
 on:
   push:
     branches:
-      - wtsh-staging
+      - wtsh-main
     paths:
       - hypha/locale/en/LC_MESSAGES/django.po
   workflow_dispatch:
