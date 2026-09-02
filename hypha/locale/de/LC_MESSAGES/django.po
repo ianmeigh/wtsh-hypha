@@ -331,10 +331,10 @@ msgstr "Dokumentzugriff für Gruppen zulassen"
 msgid "All Projects"
 msgstr "Alle Projekte"
 
-msgid "All Reviewers"
+msgid "All reviewers"
 msgstr "Alle Reviewer"
 
-msgid "All reviewers"
+msgid "All Reviewers"
 msgstr "Alle Reviewer"
 
 msgid "All reviews"
@@ -406,10 +406,10 @@ msgstr "Eine Rechnung zum Projekt „%(title)s“ wartet auf Ihre Genehmigung."
 msgid "An invoice on the project \"%(title)s\" had it's status updated by %(source_user)s."
 msgstr "Der Status einer Rechnung zum Projekt „%(title)s“ wurde von %(source_user)s aktualisiert."
 
-msgid "Anonymize"
+msgid "anonymize"
 msgstr ""
 
-msgid "anonymize"
+msgid "Anonymize"
 msgstr ""
 
 msgid "Anonymize application"
@@ -667,11 +667,11 @@ msgstr "Ein Vorschlag wurde zur Prüfung eingereicht: <{link}|{source.title_text
 msgid "Archive"
 msgstr "Archiv"
 
-msgid "Archived"
-msgstr "Archiviert"
-
 msgid "archived"
 msgstr "archiviert"
+
+msgid "Archived"
+msgstr "Archiviert"
 
 msgid "Archived Submission"
 msgstr "Archivierte Einreichung"
@@ -811,10 +811,10 @@ msgstr " als {role}"
 msgid "Assign"
 msgstr "Zuweisen"
 
-msgid "Assign Approver"
+msgid "Assign approver"
 msgstr "Zuweisen des Genehmigenden"
 
-msgid "Assign approver"
+msgid "Assign Approver"
 msgstr "Zuweisen des Genehmigenden"
 
 msgid "assigned Project form to {}"
@@ -958,10 +958,10 @@ msgstr "Zurück nach oben"
 msgid "Backup Code"
 msgstr "Backup Code"
 
-msgid "Backup codes"
+msgid "Backup Codes"
 msgstr "Backup Code"
 
-msgid "Backup Codes"
+msgid "Backup codes"
 msgstr "Backup Code"
 
 msgid "Bad Request"
@@ -1063,10 +1063,10 @@ msgstr "Kategorie:"
 msgid "Category Questions"
 msgstr "Kategorie"
 
-msgid "Change Approver"
+msgid "Change approver"
 msgstr "Genehmigender für Änderungen"
 
-msgid "Change approver"
+msgid "Change Approver"
 msgstr "Genehmigender für Änderungen"
 
 msgid "Change Author"
@@ -1204,10 +1204,10 @@ msgstr "Eingeladener Mitbewerber"
 msgid "Co-applicant re-invited"
 msgstr "Mitbewerber erneut eingeladen"
 
-msgid "Co-applicants"
+msgid "co-applicants"
 msgstr "Mitbewerber"
 
-msgid "co-applicants"
+msgid "Co-applicants"
 msgstr "Mitbewerber"
 
 msgid "Co-applicants can't be invited to completed projects"
@@ -1504,10 +1504,10 @@ msgstr ""
 msgid "Copy"
 msgstr "Urheberrecht"
 
-msgid "copy contract number"
+msgid "Copy contract number"
 msgstr "Kontaktname"
 
-msgid "Copy contract number"
+msgid "copy contract number"
 msgstr "Kontaktname"
 
 msgid "Copy {form_name}"
@@ -1591,10 +1591,10 @@ msgstr "Neue Erinnerung erstellen"
 msgid "Create project"
 msgstr "Projekt erstellen"
 
-msgid "Create Reminder"
+msgid "Create reminder"
 msgstr "Erinnerung erstellen"
 
-msgid "Create reminder"
+msgid "Create Reminder"
 msgstr "Erinnerung erstellen"
 
 msgid "Create report"
@@ -1658,7 +1658,7 @@ msgid "Date+time field"
 msgstr "Datum+Uhrzeit-Feld"
 
 msgid "{} day"
-msgstr ""
+msgstr "tage"
 
 msgid "Days"
 msgstr ""
@@ -1768,10 +1768,10 @@ msgstr "Löschen"
 msgid "description"
 msgstr "Erinnerungsbeschreibung"
 
-msgid "determination"
+msgid "Determination"
 msgstr "Entscheidung"
 
-msgid "Determination"
+msgid "determination"
 msgstr "Entscheidung"
 
 msgid "Determination draft"
@@ -1792,10 +1792,10 @@ msgstr "Entscheidungsformulare"
 msgid "determination forms"
 msgstr "Entscheidungsformulare"
 
-msgid "Determination message"
+msgid "determination message"
 msgstr "Entscheidungsmitteilung"
 
-msgid "determination message"
+msgid "Determination message"
 msgstr "Entscheidungsmitteilung"
 
 msgid "determination messages"
@@ -1939,11 +1939,11 @@ msgstr ""
 msgid "Each of the code can be used only once. When they are used up, you can generate a new set of backup codes."
 msgstr "<strong>Hinweis:</strong> Jeder Code kann nur einmal verwendet werden. Wenn sie aufgebraucht sind, können Sie einen neuen Satz von Backup-Codes generieren."
 
-msgid "Edit"
-msgstr "Bearbeiten"
-
 msgid "edit"
 msgstr "bearbeitete"
+
+msgid "Edit"
+msgstr "Bearbeiten"
 
 msgid "Edit a Determination"
 msgstr "Eine Entscheidung bearbeiten"
@@ -2047,10 +2047,10 @@ msgstr "Aktiviere die gleiche Zugangsstufe für diese Bereiche. Beispiel: Ansehe
 msgid "End"
 msgstr "Ende"
 
-msgid "end date"
+msgid "End date"
 msgstr "Enddatum"
 
-msgid "End date"
+msgid "end date"
 msgstr "Enddatum"
 
 msgid "End date must come after the start date"
@@ -2314,10 +2314,10 @@ msgstr ""
 msgid "Front page navigation content"
 msgstr ""
 
-msgid "Full name"
+msgid "full name"
 msgstr "Vollständiger Name"
 
-msgid "full name"
+msgid "Full name"
 msgstr "Vollständiger Name"
 
 msgid "Fund"
@@ -2524,10 +2524,10 @@ msgstr "Ursprünglicher Projektstatus"
 msgid "In order to access this page, you need to set up these security features. Without setting them up, you will only be able to access your account's profile section or log out from the system."
 msgstr "Um auf diese Seite zuzugreifen, müssen Sie diese Sicherheitsfunktionen einrichten. Ohne sie einzurichten, können Sie nur auf den Profilbereich Ihres Kontos zugreifen oder sich aus dem System abmelden."
 
-msgid "In progress"
+msgid "In Progress"
 msgstr "Im Gange"
 
-msgid "In Progress"
+msgid "In progress"
 msgstr "Im Gange"
 
 msgid "Internal approval"
@@ -2572,11 +2572,11 @@ msgstr ""
 msgid "Invite"
 msgstr "Einladen"
 
-msgid "Invite co-applicant"
-msgstr "Einladung des Mitbewerbers"
-
 msgid "invite co-applicant"
 msgstr "Mitantragsteller einladen"
+
+msgid "Invite co-applicant"
+msgstr "Einladung des Mitbewerbers"
 
 msgid "Invited for Proposal"
 msgstr "Zur Konzept­einreichung eingeladen"
@@ -2596,10 +2596,10 @@ msgstr "Einladung zum Konzept"
 msgid "Invite to Proposal"
 msgstr "Einladung zur Konzept­einreichung"
 
-msgid "Invoice"
+msgid "invoice"
 msgstr "Rechnung"
 
-msgid "invoice"
+msgid "Invoice"
 msgstr "Rechnung"
 
 msgid "Invoice #"
@@ -2668,10 +2668,10 @@ msgstr "Rechnungsstatus"
 msgid "invoice tag"
 msgstr "Rechnung"
 
-msgid "Invoice Tags"
+msgid "invoice tags"
 msgstr "Rechnungen"
 
-msgid "invoice tags"
+msgid "Invoice Tags"
 msgstr "Rechnungen"
 
 msgid "Invoice tags updated."
@@ -3007,10 +3007,10 @@ msgstr "Weitere Aktionen"
 msgid "More details of the project integrated at payment service."
 msgstr ""
 
-msgid "More information requested"
+msgid "More Information Requested"
 msgstr "Mehr Informationen angefordert"
 
-msgid "More Information Requested"
+msgid "More information requested"
 msgstr "Mehr Informationen angefordert"
 
 msgid "More information required"
@@ -3043,10 +3043,10 @@ msgstr "Mein Konto"
 msgid "My active invoices"
 msgstr "Meine aktiven Rechnungen"
 
-msgid "My dashboard"
+msgid "My Dashboard"
 msgstr "Mein Dashboard"
 
-msgid "My Dashboard"
+msgid "My dashboard"
 msgstr "Mein Dashboard"
 
 msgid "My flagged"
@@ -3478,10 +3478,10 @@ msgstr "Optionen"
 msgid "Optional"
 msgstr "Optional"
 
-msgid "options"
+msgid "Options"
 msgstr "Optionen"
 
-msgid "Options"
+msgid "options"
 msgstr "Optionen"
 
 msgid "OR"
@@ -3586,10 +3586,10 @@ msgstr "Anwendung"
 msgid "Paid"
 msgstr "Bezahlt"
 
-msgid "Paid date"
+msgid "paid date"
 msgstr "Zahlungsdatum"
 
-msgid "paid date"
+msgid "Paid date"
 msgstr "Zahlungsdatum"
 
 msgid "paid value"
@@ -3604,10 +3604,10 @@ msgstr "aktuell"
 msgid "Partner"
 msgstr "Partner"
 
-msgid "Partners"
+msgid "partners"
 msgstr "Partner"
 
-msgid "partners"
+msgid "Partners"
 msgstr "Partner"
 
 msgid "Partners updated."
@@ -3973,10 +3973,10 @@ msgstr "Projektleitung"
 msgid "Project lead is a required field"
 msgstr "Projektlead ist ein erforderliches Feld"
 
-msgid "Project Name"
+msgid "Project name"
 msgstr "Projektname"
 
-msgid "Project name"
+msgid "Project Name"
 msgstr "Projektname"
 
 msgid "Project overview questions and comments"
@@ -3997,10 +3997,10 @@ msgstr "Erinnerungshäufigkeit für Berichte"
 msgid "project reminder frequency"
 msgstr "Erinnerungshäufigkeit für Berichte"
 
-msgid "project report form"
+msgid "Project Report Form"
 msgstr "Projektberichtsformular"
 
-msgid "Project Report Form"
+msgid "project report form"
 msgstr "Projektberichtsformular"
 
 msgid "Project report form not configured. Please add a project report form in the"
@@ -4021,11 +4021,11 @@ msgstr ""
 msgid "Project Reviewers Roles"
 msgstr "Projektreviewerrollen"
 
-msgid "projects"
-msgstr "Projekt"
-
 msgid "Projects"
 msgstr "Projekte"
+
+msgid "projects"
+msgstr "Projekt"
 
 msgid "project settings"
 msgstr " Projekteinstellungen"
@@ -4060,11 +4060,11 @@ msgstr "Genehmigtes Projektformular"
 msgid "Project submit scope of work"
 msgstr ""
 
-msgid "Project title"
-msgstr "Projekttitle"
-
 msgid "Project Title"
 msgstr "Projekttitel"
+
+msgid "Project title"
+msgstr "Projekttitle"
 
 msgid "Project waiting contract"
 msgstr "Projekte im Auftrag"
@@ -4147,25 +4147,25 @@ msgstr "Lies hier den vollständigen Kommentar"
 msgid "Read the full determination here"
 msgstr "Lies das vollständige Ergebnis hier"
 
-msgid "Ready for Determination"
-msgstr "Bereit für Entscheidung"
-
 msgid "Ready For Determination"
 msgstr "Bereit für Entscheidung"
 
-msgid "Ready For Discussion"
-msgstr "Bereit zur Diskussion"
+msgid "Ready for Determination"
+msgstr "Bereit für Entscheidung"
 
 msgid "Ready for Discussion"
+msgstr "Bereit zur Diskussion"
+
+msgid "Ready For Discussion"
 msgstr "Bereit zur Diskussion"
 
 msgid "Ready For Discussion (revert)"
 msgstr "Bereit zur Diskussion (zurücksetzen)"
 
-msgid "Ready for Final Determination"
+msgid "Ready For Final Determination"
 msgstr "Bereit für endgültige Entscheidung"
 
-msgid "Ready For Final Determination"
+msgid "Ready for Final Determination"
 msgstr "Bereit für endgültige Entscheidung"
 
 msgid "Ready for Preliminary Determination"
@@ -4558,11 +4558,11 @@ msgstr ""
 msgid "Rich text field"
 msgstr "Rich-Text-Feld"
 
-msgid "role"
-msgstr ""
-
 msgid "Role"
 msgstr "Rollen"
+
+msgid "role"
+msgstr ""
 
 msgid "{role_name} Reviewer"
 msgstr "{role_name} Reviewer"
@@ -4642,10 +4642,10 @@ msgstr "Slack-Name"
 msgid "Saving a draft means this report will be visible to you and staff from your project page."
 msgstr "Das Speichern eines Entwurfs bedeutet, dass dieser Bericht für Sie und das Projektteam auf Ihrer Projektseite sichtbar sein wird."
 
-msgid "Scope of work"
+msgid "Scope of Work"
 msgstr "Arbeitsumfang"
 
-msgid "Scope of Work"
+msgid "Scope of work"
 msgstr "Arbeitsumfang"
 
 msgid "Score"
@@ -4669,19 +4669,19 @@ msgstr "Entscheidung im Screening"
 msgid "screening decisions"
 msgstr "Entscheidung im Screening"
 
-msgid "Sealed"
+msgid "sealed"
 msgstr "Geschlossen"
 
-msgid "sealed"
+msgid "Sealed"
 msgstr "Geschlossen"
 
 msgid "Sealed round"
 msgstr "Geschlossen"
 
-msgid "Sealed rounds"
+msgid "Sealed Rounds"
 msgstr "Runden und geschlossene Runden"
 
-msgid "Sealed Rounds"
+msgid "Sealed rounds"
 msgstr "Runden und geschlossene Runden"
 
 msgid "Search..."
@@ -5059,10 +5059,10 @@ msgstr "Team-Reviewer"
 msgid "Start"
 msgstr "Anfangen"
 
-msgid "start date"
+msgid "Start date"
 msgstr "Startdatum"
 
-msgid "Start date"
+msgid "start date"
 msgstr "Startdatum"
 
 msgid "Started CSV generation."
@@ -5086,10 +5086,10 @@ msgstr "Status"
 msgid "Statement of work"
 msgstr "Statement of Work"
 
-msgid "status"
+msgid "Status"
 msgstr "Status"
 
-msgid "Status"
+msgid "status"
 msgstr "Status"
 
 msgid "Status:"
@@ -5338,10 +5338,10 @@ msgstr ""
 msgid "supporting document"
 msgstr "Unterstützende Dokumente"
 
-msgid "Supporting documents"
+msgid "supporting documents"
 msgstr "Unterstützende Dokumente"
 
-msgid "supporting documents"
+msgid "Supporting documents"
 msgstr "Unterstützende Dokumente"
 
 msgid "Supporting Documents"
@@ -5371,11 +5371,11 @@ msgstr "Tag"
 msgid "Tag:"
 msgstr "Tag:"
 
-msgid "Tags"
-msgstr "Tag"
-
 msgid "tags"
 msgstr "Hinzufügen von Tags"
+
+msgid "Tags"
+msgstr "Tag"
 
 msgid "Tags are hierarchical in nature."
 msgstr "Tags sind hierarchisch."
@@ -6001,10 +6001,10 @@ msgstr "Review Entwurf aktualisieren"
 msgid "Update reviewers"
 msgstr "Reviewer aktualisieren"
 
-msgid "Update Status"
+msgid "Update status"
 msgstr "Status aktualisieren"
 
-msgid "Update status"
+msgid "Update Status"
 msgstr "Status aktualisieren"
 
 msgid "Update submission applicant"
@@ -6028,10 +6028,10 @@ msgstr "Hochladen"
 msgid "Upload a signed contract that will sent to applicant for countersigning."
 msgstr "Laden Sie einen unterschriebenen Vertrag hoch, der an den Antragsteller zur Gegenunterzeichnung gesendet wird."
 
-msgid "Upload Contracting Documents"
+msgid "Upload contracting documents"
 msgstr "Hochladen von Vertragsdokumenten"
 
-msgid "Upload contracting documents"
+msgid "Upload Contracting Documents"
 msgstr "Hochladen von Vertragsdokumenten"
 
 msgid "Upload countersigned contract"
@@ -6523,11 +6523,11 @@ msgstr "Ja"
 msgid "Yes, delete"
 msgstr ""
 
-msgid "Yes/No"
-msgstr "Ja/Nein"
-
 msgid "yes/no"
 msgstr ""
+
+msgid "Yes/No"
+msgstr "Ja/Nein"
 
 msgid "Yesterday"
 msgstr "Gestern"
