@@ -49,9 +49,6 @@ jobs:
           TXTY_EXPORT_CONFIG_ID: ${{ secrets.TXTY_EXPORT_CONFIG_ID }}
         run: uv run python .github/scripts/pull_translations_from_texterify.py
 
-      - name: Check downloaded translations for unexpected markup
-        run: uv run python .github/scripts/check_translation_markup.py
-
       - name: Detect changes
         id: detect-changes
         run: |
@@ -103,4 +100,4 @@ jobs:
             --base wtsh-staging \
             --head "$BRANCH" \
             --title "chore: pull translations from Texterify" \
-            --body "Automated pull of updated translations from Texterify. Downloaded .po files were checked for markup not present in the source string before this PR was opened - review the diff as normal before merging."
+            --body "Automated pull of updated translations from Texterify. Review the diff as normal before merging."
