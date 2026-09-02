@@ -1,0 +1,82 @@
+name: Push source strings to Texterify
+
+# Pushes hypha/locale/en/LC_MESSAGES/django.po to Texterify via its API whenever
+# a push to main changes it (see .github/scripts/push_source_strings_to_texterify.py
+# for why the API rather than txty-cli, and for exactly what the import
+# overwrites).
+#
+# This job never generates or commits anything - the .po file is entirely a
+# developer's responsibility, same as any other source file: run
+# `manage.py makemessages` locally after adding/editing a translatable
+# string, review the diff, and commit it (typically alongside the template/
+# code change that introduced it). CI only relays a commit that already
+# changed the file - it doesn't regenerate it, and has no write access to
+# the repo. Pulling translated content back is the separate, PR-based
+# translations-pull.yml workflow.
+#
+# Requirements:
+#   - TXTY_PROJECT_ID / TXTY_AUTH_EMAIL / TXTY_AUTH_SECRET repository secrets
+#   - a TXTY_SOURCE_LANGUAGE_NAME repository variable, if Texterify's
+#     Languages settings name English something other than "en"
+#   - end-to-end verification against a live Texterify instance - the API
+#     flow is currently only verified against Texterify's source
+
+on:
+  push:
+    branches:
+      - wtsh-staging
+    paths:
+      - hypha/locale/en/LC_MESSAGES/django.po
+  workflow_dispatch:
+
+# Queue (not cancel) overlapping runs, so two pushes close together always
+# finish in commit order. Without this, an older run finishing after a newer one
+# is usually harmless (import is additive, and English source content is always
+# blank - see push_source_strings_to_texterify.py) - but with
+# TXTY_PRUNE_ORPHAN_KEYS on, an older run can still recreate a key the newer run
+# already correctly pruned as an orphan.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  push-source-strings:
+    runs-on: ubuntu-latest
+    # push_source_strings_to_texterify.py polls for a background job to finish
+    # twice (verify, then import), each budgeted up to ~5 minutes - see
+    # POLL_MAX_ATTEMPTS there. Any change here should be reflected in the
+    # script.
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7.6.0
+        with:
+          enable-cache: true
+
+      - name: Install python dependencies
+        run: |
+          uv venv
+          uv sync --frozen
+
+      - name: Push source strings to Texterify
+        env:
+          TXTY_AUTH_EMAIL: ${{ secrets.TXTY_AUTH_EMAIL }}
+          TXTY_AUTH_SECRET: ${{ secrets.TXTY_AUTH_SECRET }}
+          TXTY_PROJECT_ID: ${{ secrets.TXTY_PROJECT_ID }}
+          # Must match how the source language is actually named in the
+          # Texterify project's Languages settings - it's a free-form label, not
+          # necessarily the ISO code "en". Falls back to "en" if unset.
+          TXTY_SOURCE_LANGUAGE_NAME: ${{ vars.TXTY_SOURCE_LANGUAGE_NAME }}
+          # Orphan keys (removed from the codebase but still in Texterify) are
+          # always reported as job warnings. They are only deleted (which
+          # removes their translations for every language) if this is explicitly
+          # set to "true" via a repository variable.
+          TXTY_PRUNE_ORPHAN_KEYS: ${{ vars.TXTY_PRUNE_ORPHAN_KEYS }}
+        run: uv run python .github/scripts/push_source_strings_to_texterify.py

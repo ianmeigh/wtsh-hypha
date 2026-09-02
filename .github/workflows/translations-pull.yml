@@ -1,0 +1,103 @@
+name: Pull translations
+
+# Manually triggered: fetch the latest translated .po files from Texterify and
+# open a PR with the changes. Auto-pushing source strings to Texterify on push
+# to main is the separate translations-push.yml workflow.
+#
+# Talks to Texterify's API directly (see .github/scripts/texterify_api.py and
+# pull_translations_from_texterify.py for why - the CLI, txty-cli, adds nothing
+# over calling the API ourselves and would mean an extra Node/npm toolchain in
+# this job for no benefit).
+#
+# Requirements:
+#   - TXTY_PROJECT_ID / TXTY_EXPORT_CONFIG_ID / TXTY_AUTH_EMAIL /
+#     TXTY_AUTH_SECRET repository secrets
+#   - confirmation that Texterify's export config produces
+#     locale/<lang>/LC_MESSAGES/django.po, matching what TXTY_EXPORT_DIRECTORY
+#     (see the script) assumes
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pull-translations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.changed }}
+      branch: ${{ steps.detect-changes.outputs.branch }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7.6.0
+        with:
+          enable-cache: true
+
+      - name: Install python dependencies
+        run: |
+          uv venv
+          uv sync --frozen
+
+      - name: Download translations
+        env:
+          TXTY_AUTH_EMAIL: ${{ secrets.TXTY_AUTH_EMAIL }}
+          TXTY_AUTH_SECRET: ${{ secrets.TXTY_AUTH_SECRET }}
+          TXTY_PROJECT_ID: ${{ secrets.TXTY_PROJECT_ID }}
+          TXTY_EXPORT_CONFIG_ID: ${{ secrets.TXTY_EXPORT_CONFIG_ID }}
+        run: uv run python .github/scripts/pull_translations_from_texterify.py
+
+      - name: Detect changes
+        id: detect-changes
+        run: |
+          # Exclude the English source file: it's translations-push.yml's
+          # responsibility, not this workflow's, and that workflow triggers on
+          # any push to main that changes it - so including it here would make
+          # merging this PR re-trigger a source-string push for no reason
+          # (Texterify never sends back anything meaningfully different for the
+          # source language - see push_source_strings_to_texterify.py).
+          if git status --porcelain -- locale ':(exclude)hypha/locale/en/LC_MESSAGES/django.po' | grep -q .; then
+            branch="translations/pull-$(date -u +%Y-%m-%d)-${{ github.run_number }}-${{ github.run_attempt }}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push changes
+        if: steps.detect-changes.outputs.changed == 'true'
+        env:
+          BRANCH: ${{ steps.detect-changes.outputs.branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add hypha/locale ':(exclude)hypha/locale/en/LC_MESSAGES/django.po'
+          git commit -m "chore: pull translations from Texterify"
+          git push origin "$BRANCH"
+
+  open-pull-request:
+    needs: pull-translations
+    if: needs.pull-translations.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+        with:
+          persist-credentials: false
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ needs.pull-translations.outputs.branch }}
+        run: |
+          gh pr create \
+            --base wtsh-staging \
+            --head "$BRANCH" \
+            --title "chore: pull translations from Texterify" \
+            --body "Automated pull of updated translations from Texterify. Review the diff as normal before merging."
