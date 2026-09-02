@@ -25,6 +25,7 @@ Optional environment variables:
 """
 
 import os
+import re
 import sys
 import time
 
@@ -278,25 +279,69 @@ def wait_for_background_job(
 
 
 def get_current_msgids() -> set:
-    """Return the set of msgids in the source .po file we just pushed.
+    """Return the set of msgids in the source .po file we just pushed, normalized
+    to match how Texterify represents them as key names.
+
+    Two normalizations mirror what Texterify does on import, so a still-current string
+    doesn't permanently mismatch and get misreported (and, with pruning on, deleted) as
+    an orphan on every push:
+    - Plural messages: babel returns message.id as a (singular, plural) tuple for an
+      entry with msgid_plural, not a plain string. Texterify's PO importer doesn't
+      handle plurals at all - it keys every entry on the raw msgid field, which for a
+      plural entry is just the singular text, silently dropping the plural form and its
+      msgstr. So we index on the singular here too, instead of the unmatchable tuple.
+    - Whitespace: Texterify trims leading/trailing whitespace from key names, but a
+      msgid can be a deliberate sentence fragment with real leading/trailing space (e.g.
+      "Hi " concatenated with a name in a template), so we trim the same way here for
+      comparison purposes.
 
     Returns:
-        set: every non-empty msgid in PO_FILE_PATH.
+        set: every non-empty msgid in PO_FILE_PATH, normalized as above.
     """
     with open(PO_FILE_PATH, "rb") as po_file:
         catalog = read_po(po_file, abort_invalid=False)
-    return {message.id for message in catalog if message.id}
+    msgids = set()
+    for message in catalog:
+        if not message.id:
+            continue
+        singular = message.id[0] if isinstance(message.id, tuple) else message.id
+        msgids.add(singular.strip())
+    return msgids
+
+
+# Escape sequences Texterify's PO importer is known to leave raw in a key name
+# instead of resolving, keyed by the two-character escape as it appears in the
+# file (see _unescape_po_key_name).
+_PO_KEY_NAME_ESCAPES = {
+    r"\"": '"',
+    "\\n": "\n",
+    "\\t": "\t",
+    "\\\\": "\\",
+}
+
+
+def _unescape_po_key_name(name: str) -> str:
+    """Undo Texterify's PO import quirk of leaving gettext escape sequences raw.
+
+    Texterify's PO importer uses the file's still-escaped substring between quote
+    delimiters as the key name, instead of resolving gettext escape sequences
+    first. So a msgid containing an escaped quote, newline, or tab comes back
+    with a literal `\\"`, `\\n`, or `\\t` in the key name rather than the actual
+    character the msgid contains.
+    """
+    return re.sub(
+        r"\\.",
+        lambda match: _PO_KEY_NAME_ESCAPES.get(match.group(0), match.group(0)),
+        name,
+    )
 
 
 def list_all_keys(session: requests.Session) -> dict:
     """Return every key currently in the Texterify project, as {name: id}.
 
-    Works around a Texterify import quirk in which a key created from a msgid containing
-    `\\"` comes back with a name containing a literal backslash before the quote, rather
-    than the plain `"` character the msgid actually contains. Texterify's PO importer
-    uses the raw, still-escaped substring between the file's quote delimiters as the key
-    name, instead of resolving the gettext escape sequence first. Without normalising
-    that here, any such key would permanently mismatch get_current_msgids() and be
+    Names are unescaped via _unescape_po_key_name() to work around a Texterify
+    import quirk - see that function's docstring. Without normalising that here,
+    any such key would permanently mismatch get_current_msgids() and be
     misreported (and, with pruning on, deleted) as an orphan on every future push.
     """
     keys = {}
@@ -313,7 +358,10 @@ def list_all_keys(session: requests.Session) -> dict:
         if not batch:
             break
         keys.update(
-            {key["attributes"]["name"].replace(r"\"", '"'): key["id"] for key in batch}
+            {
+                _unescape_po_key_name(key["attributes"]["name"]): key["id"]
+                for key in batch
+            }
         )
         if len(keys) >= body.get("meta", {}).get("total", len(keys)):
             break
