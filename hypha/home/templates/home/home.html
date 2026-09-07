@@ -1,5 +1,5 @@
 {% extends "base-apply.html" %}
-{% load nh3_tags %}
+{% load nh3_tags il8n %}
 
 {% block title_prefix %}{{ settings.core.SystemSettings.home_title }} | {% endblock %}
 {% block title %}{{ ORG_SHORT_NAME }}{% endblock %}
@@ -27,5 +27,6 @@
                 {{ settings.core.SystemSettings.home_no_applications_msg|nh3|safe }}
             </div>
         {% endif %}
+	{% translate "Hello World!" %}
     </div>
 {% endblock %}
