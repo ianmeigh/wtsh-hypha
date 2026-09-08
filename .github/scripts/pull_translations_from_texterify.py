@@ -104,7 +104,9 @@ def extract(zip_bytes: bytes) -> list:
             if member.is_dir():
                 continue
             extracted.append(member.filename)
-            if restore_header(Path(EXPORT_DIRECTORY) / member.filename):
+            if member.filename.endswith(".po") and restore_header(
+                Path(EXPORT_DIRECTORY) / member.filename
+            ):
                 print(f"  restored stripped header in {member.filename}")
     return extracted
 
