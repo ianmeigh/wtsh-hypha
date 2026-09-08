@@ -18,11 +18,52 @@ import io
 import os
 import sys
 import zipfile
+from pathlib import Path
 
 from texterify_api import PROJECT_ID, api_url, make_session
 
 EXPORT_CONFIG_ID = os.environ["TXTY_EXPORT_CONFIG_ID"]
 EXPORT_DIRECTORY = os.environ.get("TXTY_EXPORT_DIRECTORY", "hypha/locale")
+
+# Texterify's export strips the standard gettext header entry (the `msgid ""`
+# / `msgstr ""` metadata block) from every .po file it produces. Without it,
+# gettext has no Content-Type to read a charset from and falls back to ASCII,
+# which then throws UnicodeDecodeError on any non-ASCII translation. So the
+# header has to be added back after every download.
+#
+# Not restoring whatever header the file had before: Texterify doesn't feed
+# back Last-Translator/PO-Revision-Date/Language-Team, so carrying the old
+# ones forward would just freeze them at stale values forever. Content-Type
+# is the only field gettext actually reads (see cpython's gettext.py
+# GNUTranslations._parse), so that's all this header contains.
+HEADER = '''\
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\\n"
+
+'''
+
+
+def has_header(po_text: str) -> bool:
+    """Return whether po_text's first entry is the header (an empty msgid)."""
+    lines = po_text.lstrip().splitlines()
+    index = 0
+    while index < len(lines) and lines[index].startswith("#"):
+        index += 1
+    return index < len(lines) and lines[index].strip() == 'msgid ""'
+
+
+def restore_header(path: Path) -> bool:
+    """Prepend HEADER to the .po file at path if Texterify's export stripped it.
+
+    Returns:
+        bool: True if a header was added, False if the file already had one.
+    """
+    po_text = path.read_text(encoding="utf-8")
+    if has_header(po_text):
+        return False
+    path.write_text(HEADER + po_text, encoding="utf-8")
+    return True
 
 
 def download_export(session) -> bytes:
@@ -59,8 +100,12 @@ def extract(zip_bytes: bytes) -> list:
             except ValueError as exc:
                 print(f"  skipping non-file zip entry {member.filename!r}: {exc}")
                 continue
-            if not member.is_dir():
-                extracted.append(member.filename)
+
+            if member.is_dir():
+                continue
+            extracted.append(member.filename)
+            if restore_header(Path(EXPORT_DIRECTORY) / member.filename):
+                print(f"  restored stripped header in {member.filename}")
     return extracted
 
 
