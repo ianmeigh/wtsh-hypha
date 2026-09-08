@@ -410,10 +410,10 @@ msgstr "Eine Rechnung zum Projekt „%(title)s“ wartet auf Ihre Genehmigung."
 msgid "An invoice on the project \"%(title)s\" had it's status updated by %(source_user)s."
 msgstr "Der Status einer Rechnung zum Projekt „%(title)s“ wurde von %(source_user)s aktualisiert."
 
-msgid "anonymize"
+msgid "Anonymize"
 msgstr ""
 
-msgid "Anonymize"
+msgid "anonymize"
 msgstr ""
 
 msgid "Anonymize application"
@@ -445,6 +445,9 @@ msgstr "Ein Mitarbeiter von %(ORG_SHORT_NAME)s hat eine Rechnung für Ihr Projek
 
 msgid "An %(ORG_SHORT_NAME)s staff member has updated the status for an invoice on your project \"%(title)s\"."
 msgstr "Ein Mitarbeiter von %(ORG_SHORT_NAME)s hat den Status einer Rechnung für Ihr Projekt „%(title)s” aktualisiert."
+
+msgid "Another Test of Workflow Fix!"
+msgstr "This is the translation!!"
 
 msgid "An overview of active and past submissions"
 msgstr "Eine Übersicht über aktive und vergangene Einreichungen"
@@ -554,11 +557,11 @@ msgstr "Antrag eingegangen"
 msgid "application revision"
 msgstr "Anwendung"
 
-msgid "application revisions"
-msgstr "Anwendung"
-
 msgid "Application revisions"
 msgstr "Bewerbungsformulare"
+
+msgid "application revisions"
+msgstr "Anwendung"
 
 msgid "Application Sealed"
 msgstr "Titel der Anwendung"
@@ -626,10 +629,10 @@ msgstr "Von Finanzen genehmigt"
 msgid "Approved by staff"
 msgstr "Genehmigt vom Personal"
 
-msgid "Approved contract"
+msgid "approved contract"
 msgstr "Genehmigter Vertrag"
 
-msgid "approved contract"
+msgid "Approved contract"
 msgstr "Genehmigter Vertrag"
 
 msgid "approved project"
@@ -671,11 +674,11 @@ msgstr "Ein Vorschlag wurde zur Prüfung eingereicht: <{link}|{source.title_text
 msgid "Archive"
 msgstr "Archiv"
 
-msgid "Archived"
-msgstr "Archiviert"
-
 msgid "archived"
 msgstr "archiviert"
+
+msgid "Archived"
+msgstr "Archiviert"
 
 msgid "Archived Submission"
 msgstr "Archivierte Einreichung"
@@ -1208,10 +1211,10 @@ msgstr "Eingeladener Mitbewerber"
 msgid "Co-applicant re-invited"
 msgstr "Mitbewerber erneut eingeladen"
 
-msgid "co-applicants"
+msgid "Co-applicants"
 msgstr "Mitbewerber"
 
-msgid "Co-applicants"
+msgid "co-applicants"
 msgstr "Mitbewerber"
 
 msgid "Co-applicants can't be invited to completed projects"
@@ -1250,10 +1253,10 @@ msgstr "Durch Komma getrennte Liste von E-Mail-Adressen, an die eine Zusammenfas
 msgid "Comma separated list of emails where a summary of all the activities related to this lab will be sent."
 msgstr "Durch Komma getrennte Liste von E-Mail-Adressen, an die eine Zusammenfassung aller Aktivitäten in diesem Labor gesendet wird."
 
-msgid "comment"
+msgid "Comment"
 msgstr "Kommentar"
 
-msgid "Comment"
+msgid "comment"
 msgstr "Kommentar"
 
 msgid "commented"
@@ -1400,10 +1403,10 @@ msgstr "Weiter bearbeiten"
 msgid "Continue to next status"
 msgstr "Mit dem nächsten Status fortfahren"
 
-msgid "contract"
+msgid "Contract"
 msgstr "Vertrag"
 
-msgid "Contract"
+msgid "contract"
 msgstr "Vertrag"
 
 msgid "Contract #"
@@ -1508,10 +1511,10 @@ msgstr ""
 msgid "Copy"
 msgstr "Urheberrecht"
 
-msgid "copy contract number"
+msgid "Copy contract number"
 msgstr "Kontaktname"
 
-msgid "Copy contract number"
+msgid "copy contract number"
 msgstr "Kontaktname"
 
 msgid "Copy {form_name}"
@@ -1595,10 +1598,10 @@ msgstr "Neue Erinnerung erstellen"
 msgid "Create project"
 msgstr "Projekt erstellen"
 
-msgid "Create reminder"
+msgid "Create Reminder"
 msgstr "Erinnerung erstellen"
 
-msgid "Create Reminder"
+msgid "Create reminder"
 msgstr "Erinnerung erstellen"
 
 msgid "Create report"
@@ -1697,10 +1700,10 @@ msgstr "Standardwert"
 msgid "default yes/no"
 msgstr "Standardmäßig Ja/Nein"
 
-msgid "Delete"
+msgid "delete"
 msgstr "Löschen"
 
-msgid "delete"
+msgid "Delete"
 msgstr "Löschen"
 
 msgid "Delete application"
@@ -1772,10 +1775,10 @@ msgstr "Löschen"
 msgid "description"
 msgstr "Erinnerungsbeschreibung"
 
-msgid "Determination"
+msgid "determination"
 msgstr "Entscheidung"
 
-msgid "determination"
+msgid "Determination"
 msgstr "Entscheidung"
 
 msgid "Determination draft"
@@ -1784,11 +1787,11 @@ msgstr "Entscheidungsentwurf aktualisieren"
 msgid "Determination for"
 msgstr "Entscheidung für"
 
-msgid "Determination Form"
-msgstr "Entscheidungsformular"
-
 msgid "determination form"
 msgstr "Entscheidung für"
+
+msgid "Determination Form"
+msgstr "Entscheidungsformular"
 
 msgid "Determination Forms"
 msgstr "Entscheidungsformulare"
@@ -1805,10 +1808,10 @@ msgstr "Entscheidungsmitteilung"
 msgid "determination messages"
 msgstr "Entscheidungsmitteilung"
 
-msgid "determinations"
+msgid "Determinations"
 msgstr "Entscheidungen"
 
-msgid "Determinations"
+msgid "determinations"
 msgstr "Entscheidungen"
 
 msgid "Determinations of {outcome} was sent for: {submissions_links}"
@@ -1904,13 +1907,13 @@ msgstr "Rechnung herunterladen"
 msgid "Do you recommend requesting a proposal based on this concept note?"
 msgstr ""
 
-msgid "draft"
-msgstr "Entwurf"
-
 msgid "DRAFT"
 msgstr "ENTWURF"
 
 msgid "Draft"
+msgstr "Entwurf"
+
+msgid "draft"
 msgstr "Entwurf"
 
 msgid "Drafted"
@@ -2021,10 +2024,10 @@ msgstr "E-Mail"
 msgid "Email"
 msgstr "E-Mail"
 
-msgid "email address"
+msgid "Email address"
 msgstr "E-Mail-Adresse"
 
-msgid "Email address"
+msgid "email address"
 msgstr "E-Mail-Adresse"
 
 msgid "Email change requires you to put password."
@@ -2258,10 +2261,10 @@ msgstr "PAFs zur Bewertung"
 msgid "Flagged"
 msgstr "Markiert"
 
-msgid "Flags"
+msgid "flags"
 msgstr "Kennzeichnungen"
 
-msgid "flags"
+msgid "Flags"
 msgstr "Kennzeichnungen"
 
 msgid "Footer content"
@@ -2579,11 +2582,11 @@ msgstr ""
 msgid "Invite"
 msgstr "Einladen"
 
-msgid "Invite co-applicant"
-msgstr "Einladung des Mitbewerbers"
-
 msgid "invite co-applicant"
 msgstr "Mitantragsteller einladen"
+
+msgid "Invite co-applicant"
+msgstr "Einladung des Mitbewerbers"
 
 msgid "Invited for Proposal"
 msgstr "Zur Konzept­einreichung eingeladen"
@@ -2603,10 +2606,10 @@ msgstr "Einladung zum Konzept"
 msgid "Invite to Proposal"
 msgstr "Einladung zur Konzept­einreichung"
 
-msgid "Invoice"
+msgid "invoice"
 msgstr "Rechnung"
 
-msgid "invoice"
+msgid "Invoice"
 msgstr "Rechnung"
 
 msgid "Invoice #"
@@ -2639,10 +2642,10 @@ msgstr "Rechnungsdatei"
 msgid "Invoice no."
 msgstr "Rechnungsnr."
 
-msgid "Invoice number"
+msgid "invoice number"
 msgstr "Rechnungsnummer"
 
-msgid "invoice number"
+msgid "Invoice number"
 msgstr "Rechnungsnummer"
 
 msgid "Invoice requested for {project}"
@@ -2981,11 +2984,11 @@ msgstr "Menü"
 msgid "Menu Item"
 msgstr "Menüpunkt"
 
-msgid "Message"
-msgstr ""
-
 msgid "message"
 msgstr "Nachrichtenprotokoll anzeigen"
+
+msgid "Message"
+msgstr ""
 
 msgid "messages"
 msgstr ""
@@ -3050,10 +3053,10 @@ msgstr "Mein Konto"
 msgid "My active invoices"
 msgstr "Meine aktiven Rechnungen"
 
-msgid "My dashboard"
+msgid "My Dashboard"
 msgstr "Mein Dashboard"
 
-msgid "My Dashboard"
+msgid "My dashboard"
 msgstr "Mein Dashboard"
 
 msgid "My flagged"
@@ -3071,11 +3074,11 @@ msgstr "Meine Aufgaben"
 msgid "n/a - choose not to answer"
 msgstr "n/a - keine Antwort wählen"
 
-msgid "Name"
-msgstr ""
-
 msgid "name"
 msgstr "Benutzername"
+
+msgid "Name"
+msgstr ""
 
 msgid "N/A - Root Term"
 msgstr ""
@@ -3107,11 +3110,11 @@ msgstr "Neueste"
 msgid "New Test of Workflow Fix!"
 msgstr "Neuer Test der Workflow-Korrektur!"
 
-msgid "Next"
-msgstr "Weiter"
-
 msgid "next"
 msgstr "weiter"
+
+msgid "Next"
+msgstr "Weiter"
 
 msgid "Next approval group users can approve project form (for sequential approvals)"
 msgstr ""
@@ -3488,17 +3491,17 @@ msgstr "Optionen"
 msgid "Optional"
 msgstr "Optional"
 
-msgid "Options"
-msgstr "Optionen"
-
 msgid "options"
 msgstr "Optionen"
 
-msgid "OR"
-msgstr "ODER"
+msgid "Options"
+msgstr "Optionen"
 
 msgid "or"
 msgstr "oder"
+
+msgid "OR"
+msgstr "ODER"
 
 msgid "Or, alternatively, use one of your backup phones:"
 msgstr "Oder alternativ können Sie eines Ihrer Ersatztelefone verwenden:"
@@ -3596,10 +3599,10 @@ msgstr "Anwendung"
 msgid "Paid"
 msgstr "Bezahlt"
 
-msgid "paid date"
+msgid "Paid date"
 msgstr "Zahlungsdatum"
 
-msgid "Paid date"
+msgid "paid date"
 msgstr "Zahlungsdatum"
 
 msgid "paid value"
@@ -3845,11 +3848,11 @@ msgstr "Weiter"
 msgid "Progressed from {old_display} to {new_display}"
 msgstr "Fortschritt von {old_display} zu {new_display}"
 
-msgid "Project"
-msgstr ""
-
 msgid "project"
 msgstr "Projekt"
+
+msgid "Project"
+msgstr ""
 
 msgid "Project Document"
 msgstr "Projektdokument"
@@ -3878,13 +3881,13 @@ msgstr "Projekt-Enddatum"
 msgid "Project file: {title}"
 msgstr "Projektdatei: {title}"
 
-msgid "Project Form"
-msgstr "Projektformular"
-
 msgid "project form"
 msgstr "Projektformular"
 
 msgid "Project form"
+msgstr "Projektformular"
+
+msgid "Project Form"
 msgstr "Projektformular"
 
 msgid "Project form approvals"
@@ -3929,10 +3932,10 @@ msgstr ""
 msgid "Project Form Reviewers Roles"
 msgstr "Projektformular-Reviewerrollen"
 
-msgid "project forms"
+msgid "Project Forms"
 msgstr "Projektformular"
 
-msgid "Project Forms"
+msgid "project forms"
 msgstr "Projektformular"
 
 msgid "Project forms for review"
@@ -3983,10 +3986,10 @@ msgstr "Projektleitung"
 msgid "Project lead is a required field"
 msgstr "Projektlead ist ein erforderliches Feld"
 
-msgid "Project name"
+msgid "Project Name"
 msgstr "Projektname"
 
-msgid "Project Name"
+msgid "Project name"
 msgstr "Projektname"
 
 msgid "Project overview questions and comments"
@@ -4007,10 +4010,10 @@ msgstr "Erinnerungshäufigkeit für Berichte"
 msgid "project reminder frequency"
 msgstr "Erinnerungshäufigkeit für Berichte"
 
-msgid "Project Report Form"
+msgid "project report form"
 msgstr "Projektberichtsformular"
 
-msgid "project report form"
+msgid "Project Report Form"
 msgstr "Projektberichtsformular"
 
 msgid "Project report form not configured. Please add a project report form in the"
@@ -4046,10 +4049,10 @@ msgstr "Projekte im Auftrag"
 msgid "project SOW"
 msgstr "Projekt"
 
-msgid "project SOW form"
+msgid "Project SOW Form"
 msgstr "Projekt-Statement-of-Work-Formular"
 
-msgid "Project SOW Form"
+msgid "project SOW form"
 msgstr "Projekt-Statement-of-Work-Formular"
 
 msgid "project SOW forms"
@@ -4070,11 +4073,11 @@ msgstr "Genehmigtes Projektformular"
 msgid "Project submit scope of work"
 msgstr ""
 
-msgid "Project Title"
-msgstr "Projekttitel"
-
 msgid "Project title"
 msgstr "Projekttitle"
+
+msgid "Project Title"
+msgstr "Projekttitel"
 
 msgid "Project waiting contract"
 msgstr "Projekte im Auftrag"
@@ -4103,10 +4106,10 @@ msgstr "Konzept"
 msgid "Proposal attachments"
 msgstr "Anlagen zum Konzept"
 
-msgid "Proposal form"
+msgid "Proposal Form"
 msgstr "Formular zum Konzept"
 
-msgid "Proposal Form"
+msgid "Proposal form"
 msgstr "Formular zum Konzept"
 
 msgid "Proposal Information"
@@ -4163,10 +4166,10 @@ msgstr "Bereit für Entscheidung"
 msgid "Ready For Determination"
 msgstr "Bereit für Entscheidung"
 
-msgid "Ready For Discussion"
+msgid "Ready for Discussion"
 msgstr "Bereit zur Diskussion"
 
-msgid "Ready for Discussion"
+msgid "Ready For Discussion"
 msgstr "Bereit zur Diskussion"
 
 msgid "Ready For Discussion (revert)"
@@ -4193,10 +4196,10 @@ msgstr "Erhalten"
 msgid "Recently Updated"
 msgstr "Kürzlich aktualisiert"
 
-msgid "recommendation"
+msgid "Recommendation"
 msgstr "Empfehlung"
 
-msgid "Recommendation"
+msgid "recommendation"
 msgstr "Empfehlung"
 
 msgid "Recommendation comments"
@@ -4358,10 +4361,10 @@ msgstr "Berichtszeitraum ist"
 msgid "Report reminder frequency"
 msgstr "Erinnerungshäufigkeit für Berichte"
 
-msgid "Reports"
+msgid "reports"
 msgstr "Berichte"
 
-msgid "reports"
+msgid "Reports"
 msgstr "Berichte"
 
 msgid "Report Skipped"
@@ -4427,11 +4430,11 @@ msgstr "Externe Bewertung öffnen"
 msgid "Request with same time review"
 msgstr ""
 
-msgid "required"
-msgstr "erforderlich"
-
 msgid "Required"
 msgstr " Erforderlich"
+
+msgid "required"
+msgstr "erforderlich"
 
 msgid "Re-send code?"
 msgstr "Code erneut senden?"
@@ -4460,11 +4463,11 @@ msgstr "Zurück zum Haupt-Cookie-Menü."
 msgid "Reupload"
 msgstr "Neu hochladen"
 
-msgid "Review"
-msgstr "Bewertung"
-
 msgid "review"
 msgstr "Vorschau"
+
+msgid "Review"
+msgstr "Bewertung"
 
 msgid "Review Draft"
 msgstr "Bewertung für"
@@ -4487,11 +4490,11 @@ msgstr "Bestenliste der Reviewer"
 msgid "reviewer role"
 msgstr "Reviewer"
 
-msgid "reviewer roles"
-msgstr "Reviewer"
-
 msgid "Reviewer Roles"
 msgstr "Reviewers"
+
+msgid "reviewer roles"
+msgstr "Reviewer"
 
 msgid "Reviewer Roles are needed to move projects to 'Internal Approval' stage. Delete all roles to skip internal approval process and to move all internal approval projects back to the 'Draft' stage with all approvals removed."
 msgstr "Reviewerrollen werden benötigt, um Projekte in den Status \"Interne Genehmigung\" zu verschieben. Löschen Sie alle Rollen, um den internen Genehmigungsprozess zu überspringen und alle internen Genehmigungsprojekte mit allen entfernten Genehmigungen auf den Status \"Entwurf\" zurückzusetzen."
@@ -4568,11 +4571,11 @@ msgstr ""
 msgid "Rich text field"
 msgstr "Rich-Text-Feld"
 
-msgid "role"
-msgstr ""
-
 msgid "Role"
 msgstr "Rollen"
+
+msgid "role"
+msgstr ""
 
 msgid "{role_name} Reviewer"
 msgstr "{role_name} Reviewer"
@@ -4652,10 +4655,10 @@ msgstr "Slack-Name"
 msgid "Saving a draft means this report will be visible to you and staff from your project page."
 msgstr "Das Speichern eines Entwurfs bedeutet, dass dieser Bericht für Sie und das Projektteam auf Ihrer Projektseite sichtbar sein wird."
 
-msgid "Scope of work"
+msgid "Scope of Work"
 msgstr "Arbeitsumfang"
 
-msgid "Scope of Work"
+msgid "Scope of work"
 msgstr "Arbeitsumfang"
 
 msgid "Score"
@@ -4688,10 +4691,10 @@ msgstr "Geschlossen"
 msgid "Sealed round"
 msgstr "Geschlossen"
 
-msgid "Sealed rounds"
+msgid "Sealed Rounds"
 msgstr "Runden und geschlossene Runden"
 
-msgid "Sealed Rounds"
+msgid "Sealed rounds"
 msgstr "Runden und geschlossene Runden"
 
 msgid "Search..."
@@ -5042,10 +5045,10 @@ msgstr ""
 msgid "Staff Flag"
 msgstr "Team Kennzeichnungen"
 
-msgid "Staff Flagged"
+msgid "Staff flagged"
 msgstr "Vom Team gekennzeichnet"
 
-msgid "Staff flagged"
+msgid "Staff Flagged"
 msgstr "Vom Team gekennzeichnet"
 
 msgid "Staff flagged submissions"
@@ -5237,10 +5240,10 @@ msgstr "Einen Bericht einreichen"
 msgid "Submit contract documents"
 msgstr "Vertragsdokumente einreichen"
 
-msgid "submit contracting documents"
+msgid "Submit contracting documents"
 msgstr "Vertragsdokumente einreichen"
 
-msgid "Submit contracting documents"
+msgid "submit contracting documents"
 msgstr "Vertragsdokumente einreichen"
 
 msgid "Submit documents"
@@ -5270,11 +5273,11 @@ msgstr "Bericht eingereicht"
 msgid "Submitted a review"
 msgstr "Hat eine Bewertung abgegeben"
 
-msgid "Submitted Contract Documents"
-msgstr "Übertragene Vertragsdokumente"
-
 msgid "submitted contract documents"
 msgstr "eingereichte Vertragsunterlagen"
+
+msgid "Submitted Contract Documents"
+msgstr "Übertragene Vertragsdokumente"
 
 msgid "Submitted Count"
 msgstr "Eingereicht "
@@ -5348,13 +5351,13 @@ msgstr ""
 msgid "supporting document"
 msgstr "Unterstützende Dokumente"
 
-msgid "Supporting Documents"
-msgstr "Unterstützende Dokumente"
-
 msgid "supporting documents"
 msgstr "Unterstützende Dokumente"
 
 msgid "Supporting documents"
+msgstr "Unterstützende Dokumente"
+
+msgid "Supporting Documents"
 msgstr "Unterstützende Dokumente"
 
 msgid "Sustainability questions and comments"
@@ -5915,11 +5918,11 @@ msgstr "Aktualisieren der Zeiten"
 msgid "Update contract number"
 msgstr "Hochladen von Vertragsdokumenten"
 
-msgid "updated"
-msgstr "aktualisiert"
-
 msgid "Updated"
 msgstr "Aktualisiert"
+
+msgid "updated"
+msgstr "aktualisiert"
 
 msgid "updated author"
 msgstr "Aktualisierte Partner"
@@ -6014,10 +6017,10 @@ msgstr "Review Entwurf aktualisieren"
 msgid "Update reviewers"
 msgstr "Reviewer aktualisieren"
 
-msgid "Update status"
+msgid "Update Status"
 msgstr "Status aktualisieren"
 
-msgid "Update Status"
+msgid "Update status"
 msgstr "Status aktualisieren"
 
 msgid "Update submission applicant"
@@ -6284,11 +6287,11 @@ msgstr "Verifizierungscode"
 msgid "Verify Email"
 msgstr "E-Mail verifizieren"
 
-msgid "View"
-msgstr "Ansicht "
-
 msgid "view"
 msgstr "ansehen"
+
+msgid "View"
+msgstr "Ansicht "
 
 msgid "View all"
 msgstr "Alle anzeigen"
@@ -6407,10 +6410,10 @@ msgstr "Zeigen Sie Ihre Einreichung an"
 msgid "View your submission here: %(scheme)s://%(host)s%(path)s"
 msgstr "Sieh dir hier deine Einreichungen an"
 
-msgid "Visibility"
+msgid "visibility"
 msgstr "Sichtbarkeit"
 
-msgid "visibility"
+msgid "Visibility"
 msgstr "Sichtbarkeit"
 
 msgid "Visible only to staff."
@@ -6536,20 +6539,20 @@ msgstr "Ja"
 msgid "Yes, delete"
 msgstr ""
 
-msgid "Yes/No"
-msgstr "Ja/Nein"
-
 msgid "yes/no"
 msgstr ""
+
+msgid "Yes/No"
+msgstr "Ja/Nein"
 
 msgid "Yesterday"
 msgstr "Gestern"
 
-msgid "you"
-msgstr "du "
-
 msgid "You"
 msgstr "Du"
+
+msgid "you"
+msgstr "du "
 
 msgid "You are currently working on behalf of <strong class=\"font-bold\">%(user)s</strong>"
 msgstr "Sie arbeiten derzeit im Auftrag von <strong class=\"font-bold\">%(user)s</strong>"
