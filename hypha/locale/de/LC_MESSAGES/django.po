@@ -36,7 +36,7 @@ msgid "2FA requires a verification code to pair your smartphone with your accoun
 msgstr "2FA erfordert einen Verifizierungscode, um Ihr Smartphone mit Ihrem Konto zu verbinden."
 
 msgid "2nd Stage"
-msgstr ""
+msgstr "dhdgdfhfsdgh"
 
 msgid "2. Not so good"
 msgstr "2. Mangelhaft"
